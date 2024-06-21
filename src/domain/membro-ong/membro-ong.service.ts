@@ -15,4 +15,8 @@ export class MembroOngService {
             ONG: 'Médicos do Mundo'
         }
     ];
+
+    getAll() {
+        return this.membrosOng;
+    }
 }
