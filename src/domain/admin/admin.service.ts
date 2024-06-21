@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AdminService {
-  private pets = [
+  private admin = [
     {
         email: 'teste@gmail.com',
         senha: '123456',
@@ -14,6 +14,6 @@ export class AdminService {
   ];
 
   getAll() {
-    return this.pets;
+    return this.admin;
   }
 }
