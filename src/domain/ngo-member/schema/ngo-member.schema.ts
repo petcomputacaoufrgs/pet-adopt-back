@@ -1,7 +1,7 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 
 @Schema()
-export class MembroOng {
+export class NGOMember {
     @Prop({
         required: true,
     })
@@ -10,10 +10,10 @@ export class MembroOng {
     @Prop({
         required: true,
     })
-    senha: string;
+    password: string;
 
     @Prop({
         required: true,
     })
-    ong: string;
+    NGO: string;
 }
