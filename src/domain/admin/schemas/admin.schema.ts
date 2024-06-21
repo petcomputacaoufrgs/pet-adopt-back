@@ -9,5 +9,5 @@ export class Admin {
   @Prop({
     required: true,
   })
-  senha: string;
+  password: string;
 }

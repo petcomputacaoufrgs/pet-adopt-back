@@ -4,12 +4,12 @@ import { Injectable } from '@nestjs/common';
 export class AdminService {
   private admin = [
     {
-        email: 'teste@gmail.com',
-        senha: '123456',
+        email: 'test@gmail.com',
+        password: '123456',
     },
     {
-        email: 'nome@gmail.com',
-        senha: 'abcdef',
+        email: 'name@gmail.com',
+        password: 'abcdef',
     },
   ];
 
