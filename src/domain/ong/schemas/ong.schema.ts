@@ -1,54 +1,80 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 @Schema()
-export class Ong {
+export class Organization extends Document {
   @Prop({
     required: true,
+    type: String,
   })
-  nome: string;
+  name: string;
 
-  @Prop()
-  descricao: string;
+  @Prop({
+    type: String,
+  })
+  description: string;
 
   @Prop({
     required: true,
+    type: String,
   })
   email: string;
 
-  @Prop()
-  telefone: string;
+  @Prop({
+    type: String,
+  })
+  phone: string;
 
-  @Prop()
+  @Prop({
+    type: String,
+  })
   cnpj: string;
 
-  @Prop()
-  cidade: string;
+  @Prop({
+    type: String,
+  })
+  city: string;
 
-  @Prop()
+  @Prop({
+    type: String,
+  })
   website: string;
 
-  @Prop()
+  @Prop({
+    type: String,
+  })
   instagram: string;
 
-  @Prop()
+  @Prop({
+    type: String,
+  })
   facebook: string;
 
-  @Prop()
-  x: string;
+  @Prop({
+    type: String,
+  })
+  x: string; // Precisa de um nome mais descritivo se possível
 
   @Prop({
     required: true,
+    type: String,
   })
-  formularioAdocao: string;
+  adoptionForm: string;
 
-  @Prop()
-  formularioApadrinhamento: string;
+  @Prop({
+    type: String,
+  })
+  sponsorshipForm: string;
 
-  @Prop()
-  formularioLarTemporario: string;
+  @Prop({
+    type: String,
+  })
+  temporaryHomeForm: string;
 
-  @Prop()
-  formularioReivindicacao: string;
+  @Prop({
+    type: String,
+  })
+  claimForm: string;
 }
 
-export const OngSchema = SchemaFactory.createForClass(Ong);
+export const OrganizationSchema = SchemaFactory.createForClass(Organization);
