@@ -5,75 +5,50 @@ import { Document } from 'mongoose';
 export class Organization extends Document {
   @Prop({
     required: true,
-    type: String,
   })
   name: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   description: string;
 
   @Prop({
     required: true,
-    type: String,
   })
   email: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   phone: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   cnpj: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   city: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   website: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   instagram: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   facebook: string;
 
-  @Prop({
-    type: String,
-  })
-  x: string; // Precisa de um nome mais descritivo se possível
+  @Prop()
+  x: string;
 
   @Prop({
-    required: true,
-    type: String,
+    required: true
   })
   adoptionForm: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   sponsorshipForm: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   temporaryHomeForm: string;
 
-  @Prop({
-    type: String,
-  })
+  @Prop()
   claimForm: string;
 }
 
