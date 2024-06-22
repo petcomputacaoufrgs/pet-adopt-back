@@ -5,29 +5,31 @@ export class Pet {
   @Prop({
     required: true,
   })
-  nome: string;
+  name: string;
   @Prop()
-  idade: string;
+  birth: string;
   @Prop()
-  sexo: string;
+  sex: string;
   @Prop()
-  porte: string;
+  size: string;
   @Prop()
-  especie: string;
+  species: string;
   @Prop()
-  raca: string;
+  breed: string;
   @Prop()
-  características: string;
+  characteristics: string;
   @Prop()
-  ONG: string;
+  NGO: string;
   @Prop()
   status: string;
   @Prop()
-  apadrinhado: string;
+  sponsorship: boolean;
   @Prop({
     required: false,
   })
-  fotos: string;
+  photos: string;
   @Prop()
-  cidade: string;
+  city: string;
+  @Prop()
+  state: string;
 }
