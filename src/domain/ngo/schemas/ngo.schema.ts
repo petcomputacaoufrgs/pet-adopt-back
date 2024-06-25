@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
 
 @Schema()
-export class Organization extends Document {
+export class Ngo {
   @Prop({
     required: true,
   })
@@ -52,4 +51,4 @@ export class Organization extends Document {
   claimForm: string;
 }
 
-export const OrganizationSchema = SchemaFactory.createForClass(Organization);
+export const NgoSchema = SchemaFactory.createForClass(Ngo);
