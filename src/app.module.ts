@@ -1,12 +1,23 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PetModule } from './domain/pet/pet.module';
-import { AdminModule } from './domain/admin/admin.module';
-import { NGOMemberModule } from './domain/ngo-member/ngo-member.module';
 import { NgoModule } from './domain/ngo/ngo.module';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PetModule, AdminModule, NGOMemberModule, NgoModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        uri: configService
+          .get('MONGO_DB_URL')
+          .replace('<PASSWORD>', configService.get('MONGO_DB_PASSWORD')),
+      }),
+      inject: [ConfigService],
+    }),
+    PetModule,
+    NgoModule,
+  ],
   controllers: [],
   providers: [],
 })
