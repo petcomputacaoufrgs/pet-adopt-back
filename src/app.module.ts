@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PetModule } from './domain/pet/pet.module';
 import { NgoModule } from './domain/ngo/ngo.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { UserModule } from './domain/user/user.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     }),
     PetModule,
     NgoModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],
