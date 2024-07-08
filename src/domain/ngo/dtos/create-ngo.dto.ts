@@ -16,18 +16,4 @@ export class CreateNgoDto {
     sponsorshipForm?: string;
     temporaryHomeForm?: string;
     claimForm?: string;
-
-    // Método de validação customizado
-    //async validateSocialMedia(): Promise<ValidationError[]> {
-        //if (!this.x && !this.facebook && !this.instagram) {
-            //return [new ValidationError({
-                //property: 'socialMedia',
-                //constraints: {
-                    //oneOf: 'At least one of x, facebook, or instagram must be provided',
-                //},
-            //})];
-        //}
-        //return [];
-    //}
-    
 }
