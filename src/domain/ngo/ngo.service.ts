@@ -16,7 +16,7 @@ export class NgoService {
   }
 
   async create(createNgoDto: CreateNgoDto) {
-    const ngoCreated = new this.ngoModel(CreateNgoDto);
+    const ngoCreated = new this.ngoModel(createNgoDto);
 
     return await ngoCreated.save();
   }

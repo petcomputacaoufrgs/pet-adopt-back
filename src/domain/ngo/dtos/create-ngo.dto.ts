@@ -1,19 +1,43 @@
-//import { IsNotEmpty, validate, ValidationError } from 'class-validator';
+import { IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
 
 export class CreateNgoDto {
-
+    @IsNotEmpty()
     name: string;
-    description?: string;
+
+    @IsOptional()
+    description: string;
+
+    @IsNotEmpty()
+    @IsEmail()
     email: string;
-    phone?: string;
-    cnpj?: string;
-    city?: string;
-    website?: string;
-    instagram?: string;
-    facebook?: string;
-    x?: string;
+
+    @IsOptional()
+    phone: string;
+
+    @IsOptional()
+    cnpj: string;
+
+    @IsOptional()
+    city: string;
+
+    @IsOptional()
+    website: string;
+
+    @IsOptional()
+    instagram: string;
+
+    @IsOptional()
+    facebook: string;
+
+    @IsNotEmpty()
     adoptionForm: string;
-    sponsorshipForm?: string;
-    temporaryHomeForm?: string;
-    claimForm?: string;
+
+    @IsOptional()
+    sponsorshipForm: string;
+
+    @IsOptional()
+    temporaryHomeForm: string;
+
+    @IsOptional()
+    claimForm: string;
 }

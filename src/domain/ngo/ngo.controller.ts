@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { NgoService } from './ngo.service';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { HasSocialMediaPipe } from 'src/core/pipes/has-social-media.pipe';
 
 @ApiTags('ngos')
 @Controller('ngos')
@@ -14,7 +16,7 @@ export class NgoController {
   }
 
   @Post()
-  create(@Body() createNgoDto: CreateNgoDto) {
+  create(@Body(ValidationPipe, HasSocialMediaPipe) createNgoDto: CreateNgoDto) {
     this.ngoService.create(createNgoDto);
   }
 
