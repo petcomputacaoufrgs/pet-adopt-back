@@ -7,7 +7,7 @@ export class Pet {
   })
   name: string;
   @Prop()
-  birth: string;
+  age: number;
   @Prop()
   sex: string;
   @Prop()
@@ -27,11 +27,15 @@ export class Pet {
   @Prop({
     required: false,
   })
+  // @Prop()
+  // sponsorshipModalities: string[];
   photos: string[];
   @Prop()
   city: string;
   @Prop()
   state: string;
+  // @Prop()
+  // observations: string;
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);

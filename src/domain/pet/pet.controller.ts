@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dtos/create-pet.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 @ApiTags('pets')
 @Controller('pets')
@@ -14,7 +15,7 @@ export class PetController {
   }
 
   @Post()
-  create(@Body() createPetDto: CreatePetDto) {
+  create(@Body(ValidationPipe) createPetDto: CreatePetDto) {
     this.petService.create(createPetDto);
   }
 

@@ -7,6 +7,6 @@ export class HasSocialMediaPipe implements PipeTransform {
         if (!hasSocialMedia) {
             throw new BadRequestException('NGO must have at least one social media account.');
         }
-        return value;
+        return value; 
     }
 }
