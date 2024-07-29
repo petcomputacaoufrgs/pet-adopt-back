@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('users')
@@ -14,7 +15,7 @@ export class UserController {
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
+  create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
     this.userService.create(createUserDto);
   }
 
@@ -26,5 +27,10 @@ export class UserController {
   @Delete(':id')
   delete(@Param('id') id: string) {
     this.userService.delete(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body(ValidationPipe) updateUserDto: UpdateUserDto) {
+    this.userService.update(id, updateUserDto);
   }
 }
