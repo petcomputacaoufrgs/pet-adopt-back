@@ -6,36 +6,44 @@ export class Pet {
     required: true,
   })
   name: string;
-  @Prop()
+  @Prop({
+    required: true,
+  })
   age: number;
-  @Prop()
+  @Prop({
+    required: true,
+  })
   sex: string;
   @Prop()
   size: string;
-  @Prop()
+  @Prop({
+    required: true,
+  })
   species: string;
   @Prop()
   breed: string;
   @Prop()
   characteristics: string;
-  @Prop()
+  @Prop({
+    required: true,
+  })
   NGO: string;
-  @Prop()
+  @Prop({
+    required: true,
+  })
   status: string;
   @Prop()
   sponsorship: boolean;
-  @Prop({
-    required: false,
-  })
   // @Prop()
   // sponsorshipModalities: string[];
+  @Prop()
   photos: string[];
   @Prop()
   city: string;
   @Prop()
   state: string;
-  // @Prop()
-  // observations: string;
+  @Prop()
+  observations: string;
 }
 
 export const PetSchema = SchemaFactory.createForClass(Pet);

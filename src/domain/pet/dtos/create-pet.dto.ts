@@ -1,6 +1,20 @@
-import {IsDate, IsNotEmpty, IsOptional, MaxLength, MinLength, IsEnum, IsIn, IsDateString,Length, IsNumberString, IsNumber, IsBoolean, IsString} from 'class-validator'
+import { 
+  IsNotEmpty, 
+  IsOptional, 
+  MaxLength, 
+  IsEnum, 
+  IsIn, 
+  IsDateString,
+  Length, 
+  IsNumber, 
+  IsBoolean, 
+  IsString, 
+  ValidateIf, 
+  ArrayMinSize, 
+  IsArray} from 'class-validator'
 import { IsSizeRequiredForSpecies } from './is-size-required-for-species';
 import { IsSponsorshipRequired } from './is-sponsorship-required';
+import { Species } from 'src/core/enums/species.enum';
 
 
 export class CreatePetDto {
@@ -9,20 +23,26 @@ export class CreatePetDto {
   name: string;
 
   @IsNotEmpty()
-  // @IsNumber() // ???
-  // @IsNumberString() // ???
-  age: string; //age: number ???
+  @IsNumber() 
+  age: number; 
 
   @IsNotEmpty()
   @IsIn(['F', 'M'])
   sex: string;
 
-  @IsIn(['Cachorro', 'Gato', 'Outro'])
-  species: string;
+  @IsNotEmpty()
+  @IsEnum(Species)
+  species: Species;
 
-  @IsOptional()
+  @ValidateIf(o => o.species === Species.OTHER)
+  @IsNotEmpty()
+  @IsString()
+  otherSpecies: string;
+
+  @ValidateIf(o => o.species === Species.DOG)
+  @IsNotEmpty()
   @IsIn(['G','M','P'])
-  //@IsSizeRequiredForSpecies()
+  @IsString()
   size: string;
 
   @IsOptional()
@@ -39,13 +59,16 @@ export class CreatePetDto {
   status: string;
 
   @IsBoolean()
+  @IsOptional()
   sponsorship: boolean;
 
   //@IsSponsorshipRequired({ message: 'Sponsorship modalities are required when sponsorship is true' })
   //sponsorshipModalities: string[];
   
   @IsNotEmpty()
-  @MinLength(2)
+  @IsArray()
+  @ArrayMinSize(2)
+  @IsString({ each: true })
   photos: string[];
 
   @IsNotEmpty()
@@ -56,6 +79,6 @@ export class CreatePetDto {
   @IsString()
   state: string;
 
-  // @IsOptional()
-  //observations: string;
+  @IsOptional()
+  observations: string;
 }
