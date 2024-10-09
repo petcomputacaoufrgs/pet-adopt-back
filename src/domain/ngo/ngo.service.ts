@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Ngo } from './schemas/NGO.schema';
 import { Model } from 'mongoose';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
+import { UpdateNgoDto } from './dtos/update-ngo.dto';
 
 @Injectable()
 export class NgoService {
@@ -28,5 +29,10 @@ export class NgoService {
 
   async delete(id: string) {
     const ngo = await this.ngoModel.findByIdAndDelete(id);
+  }
+  
+  async update(id: string, updateNgoDto: UpdateNgoDto) {
+    const userUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true });
+    return await userUpdated.save();
   }
 }
