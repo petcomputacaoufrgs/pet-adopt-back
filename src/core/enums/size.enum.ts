@@ -1,6 +1,5 @@
-export enum Size{
-    
-    G = 'G',
-    M = 'M',
-    P = 'P'
+export enum Size {
+  G = 'G',
+  M = 'M',
+  P = 'P',
 }

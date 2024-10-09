@@ -6,7 +6,6 @@ import { CreateNgoDto } from './dtos/create-ngo.dto';
 
 @Injectable()
 export class NgoService {
-  
   constructor(@InjectModel(Ngo.name) private ngoModel: Model<Ngo>) {}
 
   async getAll() {

@@ -37,7 +37,7 @@ export class Ngo {
   x: string;
 
   @Prop({
-    required: true
+    required: true,
   })
   adoptionForm: string;
 

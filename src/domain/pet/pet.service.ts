@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Pet } from './schemas/pet.schema';
 import { Model } from 'mongoose';
 import { CreatePetDto } from './dtos/create-pet.dto';
+import { Species } from 'src/core/enums/species.enum';
 
 @Injectable()
 export class PetService {
@@ -20,6 +21,7 @@ export class PetService {
     // validate species for otherSpecies property
     // if is OTHER we put the value as the value in otherSpecies
     // if not, we just store the value of species
+    petCreated.species = createPetDto.species === Species.OTHER ? createPetDto.otherSpecies : createPetDto.species;
 
     return await petCreated.save();
   }
