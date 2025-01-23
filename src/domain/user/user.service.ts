@@ -25,6 +25,10 @@ export class UserService {
     return user;
   }
 
+  async getByEmail(email: string): Promise<User | undefined> {
+    return await this.userModel.findOne({ email }).select('+password');
+  }
+
   async delete(id: string) {
     const user = await this.userModel.findByIdAndDelete(id);
   }

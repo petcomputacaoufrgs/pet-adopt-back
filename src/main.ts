@@ -12,7 +12,7 @@ async function bootstrap() {
   const port = configService.get<string>('PORT', '3000');
 
   const config = new DocumentBuilder()
-    .setTitle('PetDopt - V1')
+    .setTitle('PetAdopt - V1')
     .setDescription('Pet Adopt API Documentation')
     .setVersion('1.0')
     .addBearerAuth()
