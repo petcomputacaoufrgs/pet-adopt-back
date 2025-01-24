@@ -3,6 +3,7 @@ import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
 import { UserService } from 'src/domain/user/user.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { JwtService} from '@nestjs/jwt';
+import { ValidationError } from 'class-validator';
 
 //interface User {
 //    id: number;
@@ -39,10 +40,7 @@ export class AuthService { //integrar com o dto do usuário do petadopt
         
 
         // Verificação da senha (com criptografia)
-        // if (this.encryptionService.comparePassword(user.password, password)) 
-
-        // Verificação da senha (sem criptografia)
-        if (user.password === password) {
+        if (this.encryptionService.comparePassword(user.password, password)){
             // Remove campo sensível de senha antes de retornar um objeto usuário.
             const { password, ...result } = user;  // decidir se o campo confirmPassword é necessário
             return result;
@@ -66,5 +64,22 @@ export class AuthService { //integrar com o dto do usuário do petadopt
         return {
             access_token: this.jwtService.sign(payload),
         };
+    }
+
+    async signup(signupDto: CreateUserDto): Promise<any> {  
+        if (signupDto.password !== signupDto.confirmPassword)
+            throw new ValidationError();
+        
+        const hashedPassword = await this.encryptionService.encryptPassword(
+          signupDto.password,
+        );
+    
+        await this.userService.create({
+          email: signupDto.email,
+          password: hashedPassword,
+          confirmPassword:hashedPassword,
+          NGO: signupDto.NGO,
+          role: signupDto.role,
+        });
     }
 }
