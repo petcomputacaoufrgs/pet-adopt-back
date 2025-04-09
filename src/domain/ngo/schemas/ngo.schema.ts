@@ -34,6 +34,9 @@ export class Ngo {
   facebook: string;
 
   @Prop()
+  tiktok: string;
+
+  @Prop()
   x: string;
 
   @Prop({

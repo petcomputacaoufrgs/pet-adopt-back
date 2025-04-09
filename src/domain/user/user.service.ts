@@ -4,6 +4,7 @@ import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { Role } from 'src/core/enums/role.enum';	
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {} // uso da classe User do schema
@@ -15,14 +16,25 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
+    if (createUserDto.role === Role.NGO_MEMBER && !createUserDto.NGO) {
+      throw new Error('NGO is required when role is NGO_MEMBER');
+    }
+    
+    if (createUserDto.role === Role.ADMIN && createUserDto.NGO) {
+      throw new Error('NGO is not required when role is ADMIN');
+    }
+  
     const userCreated = new this.userModel(createUserDto);
-
     return await userCreated.save();
   }
 
   async getById(id: string) {
     const user = await this.userModel.findById(id);
     return user;
+  }
+
+  async getByName(name: string): Promise<User | undefined>{
+    return await this.userModel.findOne({name});
   }
 
   async getByEmail(email: string): Promise<User | undefined> {

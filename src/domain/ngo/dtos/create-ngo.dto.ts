@@ -29,6 +29,9 @@ export class CreateNgoDto {
   @IsOptional()
   facebook: string;
 
+  @IsOptional()
+  tiktok: string;
+
   @IsNotEmpty()
   adoptionForm: string;
 

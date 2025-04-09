@@ -54,15 +54,16 @@ export class CreatePetDto {
   NGO: string;
 
   @IsNotEmpty()
-  @IsIn(['Disponivel', 'Adotado', 'Em lar temporario'])
+  @IsIn(['Available', 'Adopted', 'TempHome'])
   status: string;
 
   @IsBoolean()
-  @IsOptional()
-  sponsorship: boolean;
+  @IsNotEmpty()
+  forTempHome: boolean;
 
-  //@IsSponsorshipRequired({ message: 'Sponsorship modalities are required when sponsorship is true' })
-  //sponsorshipModalities: string[];
+  @IsBoolean()
+  @IsNotEmpty()
+  forAdoption: boolean;
 
   @IsNotEmpty()
   @IsArray()

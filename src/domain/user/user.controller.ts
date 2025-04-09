@@ -19,6 +19,11 @@ export class UserController {
     this.userService.create(createUserDto);
   }
 
+  @Get(':name')
+  getByName(@Param('name') name: string) {
+    return this.userService.getByName(name);
+  }
+  
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.userService.getById(id);

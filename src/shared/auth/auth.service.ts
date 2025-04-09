@@ -4,25 +4,7 @@ import { UserService } from 'src/domain/user/user.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { JwtService} from '@nestjs/jwt';
 import { ValidationError } from 'class-validator';
-
-//interface User {
-//    id: number;
-//    email: string;
-//    password: string;
-//}
-
-// const fakeUsers: User[] = [
-//     {
-//         id: 1,
-//         username: "teste",
-//         password: "senha"
-//     },
-//     {
-//         id: 2,
-//         username: "teste2",
-//         password: "senha2"
-//     }
-// ];
+import { Role } from 'src/core/enums/role.enum';
 
 @Injectable()
 export class AuthService { //integrar com o dto do usuário do petadopt
@@ -75,6 +57,7 @@ export class AuthService { //integrar com o dto do usuário do petadopt
         );
     
         await this.userService.create({
+          name: signupDto.name,
           email: signupDto.email,
           password: hashedPassword,
           confirmPassword:hashedPassword,
