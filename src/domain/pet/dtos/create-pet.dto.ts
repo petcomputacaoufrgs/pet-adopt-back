@@ -12,6 +12,7 @@ import {
   ValidateIf,
   ArrayMinSize,
   IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 // import { IsSponsorshipRequired } from './is-sponsorship-required';
 import { Species } from 'src/core/enums/species.enum';
@@ -68,6 +69,7 @@ export class CreatePetDto {
   @IsNotEmpty()
   @IsArray()
   @ArrayMinSize(2)
+  @ArrayMaxSize(10)
   @IsString({ each: true })
   photos: string[];
 
@@ -82,3 +84,6 @@ export class CreatePetDto {
   @IsOptional()
   observations: string;
 }
+
+
+// Como funciona o procedimento de passar fotos de um site(front-end) para salvar no banco de dados (back-end)? Estamos utilizando React no front e NestJs no back.
