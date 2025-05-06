@@ -6,6 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors(); // <-- Isso permite chamadas do React (ou qualquer frontend via HTTP)
+  // Podemos adicionar uma origem específica, para garantir que só o front tenha acesso, por segurança
+  
   app.setGlobalPrefix('api/v1');
 
   const configService = app.get(ConfigService);

@@ -5,6 +5,7 @@ import { EncryptionService } from '../encryption/encryption.service';
 import { JwtService} from '@nestjs/jwt';
 import { ValidationError } from 'class-validator';
 import { Role } from 'src/core/enums/role.enum';
+import { HttpException, HttpStatus } from '@nestjs/common'; 
 
 @Injectable()
 export class AuthService { //integrar com o dto do usuário do petadopt
@@ -50,8 +51,13 @@ export class AuthService { //integrar com o dto do usuário do petadopt
 
     async signup(signupDto: CreateUserDto): Promise<any> {  
         if (signupDto.password !== signupDto.confirmPassword)
-            throw new ValidationError();
+            throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
         
+        const existingUser = await this.userService.getByEmail(signupDto.email);
+        if (existingUser) {
+            throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
+        }
+
         const hashedPassword = await this.encryptionService.encryptPassword(
           signupDto.password,
         );
