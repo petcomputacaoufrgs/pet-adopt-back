@@ -9,9 +9,18 @@ import { Species } from 'src/core/enums/species.enum';
 export class PetService {
   constructor(@InjectModel(Pet.name) private petModel: Model<Pet>) {}
 
-  async getAll() {
-    const pets = await this.petModel.find({});
+  async getAll(filters: any = {}) {
+    // Remove filtros vazios
+    Object.keys(filters).forEach(key => {
+      if (!filters[key]) delete filters[key];
+    });
 
+    // Ajuste para species (exemplo: capitalize)
+    if (filters.species) {
+      filters.species = filters.species.charAt(0).toUpperCase() + filters.species.slice(1).toLowerCase();
+    }
+
+    const pets = await this.petModel.find(filters);
     return pets;
   }
 

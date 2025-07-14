@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Body, Controller, Delete, Get, Param, Post, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dtos/create-pet.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -16,8 +16,8 @@ export class PetController {
   constructor(private petService: PetService) {}
 
   @Get()
-  getAll() {
-    return this.petService.getAll();
+  getAll(@Query() query: any) {
+    return this.petService.getAll(query);
   }
 
   
