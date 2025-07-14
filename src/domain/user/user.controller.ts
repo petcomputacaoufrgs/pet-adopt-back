@@ -3,6 +3,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { Role } from '../../core/enums/role.enum';
 
 @ApiTags('users')
 @Controller('users')
@@ -27,6 +28,11 @@ export class UserController {
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.userService.getById(id);
+  }
+
+  @Get('role/:role')
+  getByRole(@Param('role') role: Role) {
+    return this.userService.getByRole(role);
   }
 
   @Delete(':id')

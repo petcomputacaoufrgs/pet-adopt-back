@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
+
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {} // uso da classe User do schema
@@ -39,6 +40,10 @@ export class UserService {
 
   async getByEmail(email: string): Promise<User | undefined> {
     return await this.userModel.findOne({ email }).select('+password');
+  }
+
+  async getByRole(role: Role): Promise<User[]> {
+    return await this.userModel.find({ role });
   }
 
   async delete(id: string) {

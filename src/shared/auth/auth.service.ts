@@ -41,7 +41,6 @@ export class AuthService { //integrar com o dto do usuário do petadopt
             sub: user._doc._id,
             role: user._doc.role,
         };
-        console.log(user);
         
         // Cria token.
         return {

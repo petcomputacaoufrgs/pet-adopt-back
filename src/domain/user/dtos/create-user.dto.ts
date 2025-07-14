@@ -24,5 +24,5 @@ export class CreateUserDto {
     NGO: string;
 
    
-  }
+}
   

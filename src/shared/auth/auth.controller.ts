@@ -9,14 +9,6 @@ export class AuthController {
 
     constructor(private authService: AuthService) { }
 
-
-    // Versão Anterior:
-    /*
-    @Post('login')
-    login(@Body() authPayload: AuthPayloadDTO){
-        const token = this.authService.validateUser(authPayload);
-    */
-
     @UseGuards(LocalAuthGuard)
     @Post('/login')
     async login(@Request() req) {
