@@ -5,13 +5,23 @@ import { Model } from 'mongoose';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
+import { filter } from 'rxjs';
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<User>) {} // uso da classe User do schema
 
-  async getAll() {
-    const users = await this.userModel.find({});
+  async getAll(filters: any = {}) {
+    // Remove filtros vazios
+    Object.keys(filters).forEach(key => {
+      if (!filters[key]) delete filters[key];
+      if (typeof filters[key] === 'string') filters[key] = filters[key].replace(/^"+|"+$/g, '').replace(/^'+|'+$/g, '');
+      });
+
+    
+    if(filters.role) filters.role = filters.role.toUpperCase(); 
+
+    const users = await this.userModel.find(filters); // .populate('NGO');Popula o campo NGO se existir
 
     return users;
   }

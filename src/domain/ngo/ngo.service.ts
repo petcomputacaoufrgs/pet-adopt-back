@@ -4,13 +4,21 @@ import { Ngo } from './schemas/NGO.schema';
 import { Model } from 'mongoose';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
+import { filter } from 'rxjs';
 
 @Injectable()
 export class NgoService {
   constructor(@InjectModel(Ngo.name) private ngoModel: Model<Ngo>) {}
 
-  async getAll() {
-    const ngos = await this.ngoModel.find({});
+  async getAll(filters: any = {}) {
+    // Remove empty filters
+    Object.keys(filters).forEach(key => {
+      if (!filters[key]) delete filters[key];
+      if (typeof filters[key] === 'string') filters[key] = filters[key].replace(/^"+|"+$/g, '').replace(/^'+|'+$/g, '');
+    });
+
+    
+    const ngos = await this.ngoModel.find(filters);
 
     return ngos;
   }

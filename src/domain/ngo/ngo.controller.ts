@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get,Query ,Param, Patch, Post } from '@nestjs/common';
 import { NgoService } from './ngo.service';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
@@ -12,8 +12,8 @@ export class NgoController {
   constructor(private ngoService: NgoService) {}
 
   @Get()
-  getAll() {
-    return this.ngoService.getAll();
+  getAll(@Query() query: any) {
+    return this.ngoService.getAll(query);
   }
 
   @Post()
