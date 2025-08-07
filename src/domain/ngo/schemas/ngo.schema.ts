@@ -19,7 +19,7 @@ export class Ngo {
   phone: string;
 
   @Prop()
-  cnpj: string;
+  documento: string;
 
   @Prop()
   city: string;
