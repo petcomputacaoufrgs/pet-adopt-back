@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Ngo } from './schemas/NGO.schema';
 import { Model } from 'mongoose';
@@ -24,7 +24,10 @@ export class NgoService {
   }
 
   async create(createNgoDto: CreateNgoDto) {
-    const ngoCreated = new this.ngoModel(createNgoDto);
+    const ngoCreated = new this.ngoModel({
+        ...createNgoDto,
+        approved: false  // Sempre falso para novas ONGs
+    });
 
     return await ngoCreated.save();
   }
@@ -40,7 +43,26 @@ export class NgoService {
   }
   
   async update(id: string, updateNgoDto: UpdateNgoDto) {
-    const userUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true });
-    return await userUpdated.save();
+    const ngoUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true });
+    if (!ngoUpdated) {
+        throw new NotFoundException('NGO not found');
+    }
+    return ngoUpdated;
+  }
+
+  async approve(id: string) {
+    const ngoUpdated = await this.ngoModel.findByIdAndUpdate(
+        id, 
+        { approved: true }, 
+        { new: true }
+    );
+    if (!ngoUpdated) {
+        throw new NotFoundException('NGO not found');
+    }
+    return ngoUpdated;
+  }
+
+  async getUnapproved(){
+      return await this.ngoModel.find({ approved: false });
   }
 }

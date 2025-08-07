@@ -6,6 +6,12 @@ import { ApiTags } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { HasSocialMediaPipe } from 'src/core/pipes/has-social-media.pipe';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/core/guards/roles.guard';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { Role } from 'src/core/enums/role.enum';
+
 @ApiTags('ngos')
 @Controller('ngos')
 export class NgoController {
@@ -14,6 +20,11 @@ export class NgoController {
   @Get()
   getAll(@Query() query: any) {
     return this.ngoService.getAll(query);
+  }
+
+  @Get('/unapproved')
+  getUnapproved() {
+    return this.ngoService.getUnapproved();
   }
 
   @Post()
@@ -27,6 +38,8 @@ export class NgoController {
   }
 
   @Delete(':id')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles(Role.ADMIN)
   delete(@Param('id') id: string) {
     this.ngoService.delete(id);
   }
@@ -34,5 +47,12 @@ export class NgoController {
   @Patch(':id')
   update(@Param('id') id: string, @Body(ValidationPipe) updateNgoDto: UpdateNgoDto) {
     this.ngoService.update(id, updateNgoDto);
+  }
+
+  @Patch(':id/approve')
+  //@UseGuards(JwtAuthGuard, RolesGuard)
+  //@Roles(Role.ADMIN)
+  async approveNgo(@Param('id') id: string) {
+    return this.ngoService.approve(id);
   }
 }

@@ -52,6 +52,9 @@ export class Ngo {
 
   @Prop()
   claimForm: string;
+
+  @Prop()
+  approved: boolean;
 }
 
 export const NgoSchema = SchemaFactory.createForClass(Ngo);
