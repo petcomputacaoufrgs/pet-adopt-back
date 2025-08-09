@@ -27,11 +27,11 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    if (createUserDto.role === Role.NGO_MEMBER && !createUserDto.NGO) {
+    if (createUserDto.role === Role.NGO_MEMBER && !createUserDto.ngoId) {
       throw new Error('NGO is required when role is NGO_MEMBER');
     }
     
-    if (createUserDto.role === Role.ADMIN && createUserDto.NGO) {
+    if (createUserDto.role === Role.ADMIN && createUserDto.ngoId) {
       throw new Error('NGO is not required when role is ADMIN');
     }
   

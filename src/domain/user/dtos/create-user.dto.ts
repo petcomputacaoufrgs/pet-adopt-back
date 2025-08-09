@@ -12,6 +12,8 @@ export class CreateUserDto {
     @IsNotEmpty()
     @IsString()
     password: string;
+    @IsNotEmpty()
+    @IsString()
     confirmPassword: string;
 
     @IsNotEmpty()
@@ -19,9 +21,9 @@ export class CreateUserDto {
     role: Role;
 
     @ValidateIf((o) => o.role === Role.NGO_MEMBER)
-    @IsNotEmpty({ message: 'NGO is required when role is NGO_MEMBER' })
+    @IsNotEmpty({ message: 'NGO ID is required when role is NGO_MEMBER' })
     @IsString()
-    NGO: string;
+    ngoId?: string;
 
    
 }

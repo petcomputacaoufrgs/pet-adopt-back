@@ -5,6 +5,7 @@ import { LocalStrategy } from './strategies/local.strategy';
 import { EncryptionModule } from '../encryption/encryption.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/domain/user/user.module';
+import { NgoModule } from 'src/domain/ngo/ngo.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
@@ -13,6 +14,7 @@ import { JwtModule } from '@nestjs/jwt';
   providers: [AuthService, LocalStrategy, JwtStrategy],
   imports: [
     UserModule,
+    NgoModule,
     EncryptionModule,
     PassportModule,
     ConfigModule,

@@ -1,20 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common'; 
 import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
 import { UserService } from 'src/domain/user/user.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { JwtService} from '@nestjs/jwt';
-import { ValidationError } from 'class-validator';
+import { NgoService } from 'src/domain/ngo/ngo.service';
+import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Role } from 'src/core/enums/role.enum';
-import { HttpException, HttpStatus } from '@nestjs/common'; 
 
 @Injectable()
-export class AuthService { //integrar com o dto do usuário do petadopt
-
-    constructor(
-        private userService: UserService,
-        private encryptionService: EncryptionService,
-        private jwtService: JwtService,
-    ) {}
+@Injectable()
+export class AuthService {
+  constructor(
+    private userService: UserService,
+    private encryptionService: EncryptionService,
+    private jwtService: JwtService,
+    private ngoService: NgoService,
+  ) {}
 
     async validateUser(email: string, password: string): Promise<any> {
         // Verificação de e-mail. 
@@ -48,26 +49,66 @@ export class AuthService { //integrar com o dto do usuário do petadopt
         };
     }
 
-    async signup(signupDto: CreateUserDto): Promise<any> {  
-        if (signupDto.password !== signupDto.confirmPassword)
-            throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
+    // Método de signup para usuários comuns (membros de ONG e admins do site)
+    async signupRegularUser(signupDto: CreateUserDto): Promise<any> {
+        if (signupDto.password !== signupDto.confirmPassword) {
+        throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
+        }
         
         const existingUser = await this.userService.getByEmail(signupDto.email);
+        if (existingUser) {
+        throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
+        }
+
+        const hashedPassword = await this.encryptionService.encryptPassword(signupDto.password);
+        
+        await this.userService.create({
+        ...signupDto,
+        password: hashedPassword,
+        confirmPassword: hashedPassword,
+        });
+    }
+
+    // Método para signup de Admin de ONG
+    async signupNgoAdmin(signupDto: NgoSignupDto): Promise<any> {
+        const { user, ngo } = signupDto;
+
+        if (user.password !== user.confirmPassword) {
+            throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
+        }
+        
+        const existingUser = await this.userService.getByEmail(user.email);
         if (existingUser) {
             throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
         }
 
-        const hashedPassword = await this.encryptionService.encryptPassword(
-          signupDto.password,
-        );
-    
-        await this.userService.create({
-          name: signupDto.name,
-          email: signupDto.email,
-          password: hashedPassword,
-          confirmPassword:hashedPassword,
-          NGO: signupDto.NGO,
-          role: signupDto.role,
-        });
+        // Cria ONG e conta institucional, garantindo que ambas as operações sejam atômicas, ou seja, se uma falhar, a outra deve ser revertida.
+        let createdNgo;
+        try {
+            console.log(ngo);
+            createdNgo = await this.ngoService.create(ngo);
+            console.log('ONG criada com sucesso:', createdNgo);
+
+            const hashedPassword = await this.encryptionService.encryptPassword(user.password);
+
+            await this.userService.create({
+                ...user,
+                password: hashedPassword,
+                confirmPassword: hashedPassword,
+                ngoId: createdNgo._id,
+                role: Role.NGO_ADMIN_PENDING,
+            });
+            console.log('Usuário criado com sucesso:', user);
+
+            return { message: 'ONG e conta administrativa criadas. Aguardando aprovação.' };
+            } catch (error) {
+            // Rollback manual caso a criação da conta de usuário falhe
+            if (createdNgo) {
+                await this.ngoService.delete(createdNgo._id).catch(err => {
+                console.error('Falha no rollback: não foi possível deletar a ONG órfã.', err);
+                });
+            }
+            throw new HttpException('Falha no cadastro da ONG.', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -15,7 +15,7 @@ export class CreateNgoDto {
   phone: string;
 
   @IsOptional()
-  documento: string;
+  document: string;
 
   @IsOptional()
   city: string;

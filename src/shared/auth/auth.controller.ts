@@ -3,6 +3,7 @@ import { Controller, Post, UseGuards, Request, Body, Get, HttpException } from '
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/core/guards/local-auth.guard';
 import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
+import { NgoSignupDto } from './dtos/ngo-signup.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -18,8 +19,13 @@ export class AuthController {
         return token;
     }
 
-    @Post('/signup')
-    async signup(@Body() signupDto: CreateUserDto) {
-        return await this.authService.signup(signupDto);
+    @Post('signup/regular')
+    async signupRegular(@Body() signupDto: CreateUserDto) {
+        return this.authService.signupRegularUser(signupDto);
+    }
+
+    @Post('signup/ngo')
+    async signupNgo(@Body() signupDto: NgoSignupDto) {
+        return this.authService.signupNgoAdmin(signupDto);
     }
 }

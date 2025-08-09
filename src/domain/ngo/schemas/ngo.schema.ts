@@ -1,7 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 @Schema()
-export class Ngo {
+// Extende documento para herdar propriedade _id.
+export class Ngo extends Document {
   @Prop({
     required: true,
   })
@@ -19,7 +21,7 @@ export class Ngo {
   phone: string;
 
   @Prop()
-  documento: string;
+  document: string;
 
   @Prop()
   city: string;
@@ -53,7 +55,9 @@ export class Ngo {
   @Prop()
   claimForm: string;
 
-  @Prop()
+  @Prop({
+    default: false
+  })
   approved: boolean;
 }
 
