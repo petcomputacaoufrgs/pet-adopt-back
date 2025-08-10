@@ -27,6 +27,12 @@ export class User {
     required: true,
   })
   role: Role;
+
+  @Prop({ 
+    type: String, 
+    required: false 
+  })
+  ngoId?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -6,6 +6,7 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
 import { filter } from 'rxjs';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
@@ -27,8 +28,8 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto) {
-    if (createUserDto.role === Role.NGO_MEMBER && !createUserDto.ngoId) {
-      throw new Error('NGO is required when role is NGO_MEMBER');
+    if ((createUserDto.role === Role.NGO_MEMBER || createUserDto.role == Role.NGO_ADMIN_PENDING) && !createUserDto.ngoId) {
+      throw new Error('NGO is required when role is NGO_MEMBER or NGO_ADMIN_PENDING');
     }
     
     if (createUserDto.role === Role.ADMIN && createUserDto.ngoId) {
@@ -64,4 +65,16 @@ export class UserService {
     const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true });
     return await userUpdated.save();
   }
+
+  async updateUserRoleByNgoId(ngoId: string, newRole: string, session: any): Promise<User> {
+    const user = await this.userModel.findOneAndUpdate(
+        { ngoId: ngoId },
+        { role: newRole },
+        { new: true, session }
+    ).exec();
+    if (!user) {
+        throw new NotFoundException('User for this NGO not found.');
+    }
+    return user;
+}
 }

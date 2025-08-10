@@ -41,12 +41,12 @@ export class NgoController {
   //@UseGuards(JwtAuthGuard, RolesGuard)
   //@Roles(Role.ADMIN)
   delete(@Param('id') id: string) {
-    this.ngoService.delete(id);
+    return this.ngoService.delete(id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body(ValidationPipe) updateNgoDto: UpdateNgoDto) {
-    this.ngoService.update(id, updateNgoDto);
+    return this.ngoService.update(id, updateNgoDto);
   }
 
   @Patch(':id/approve')

@@ -4,11 +4,15 @@ import { Ngo } from './schemas/NGO.schema';
 import { Model } from 'mongoose';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
+import { UserService } from '../user/user.service';
 import { filter } from 'rxjs';
 
 @Injectable()
 export class NgoService {
-  constructor(@InjectModel(Ngo.name) private ngoModel: Model<Ngo>) {}
+  constructor(
+    @InjectModel(Ngo.name) private ngoModel: Model<Ngo>,
+    private userService: UserService
+  ) {}
 
   async getAll(filters: any = {}) {
     // Remove empty filters
@@ -50,16 +54,38 @@ export class NgoService {
     return ngoUpdated;
   }
 
-  async approve(id: string) {
-    const ngoUpdated = await this.ngoModel.findByIdAndUpdate(
-        id, 
-        { approved: true }, 
-        { new: true }
-    );
-    if (!ngoUpdated) {
-        throw new NotFoundException('NGO not found');
+  async approve(ngoId: string): Promise<Ngo> {
+    // Start a transaction if your MongoDB setup supports it
+    const session = await this.ngoModel.startSession();
+    session.startTransaction();
+
+    try {
+      // 1. Approve the NGO
+      const approvedNgo = await this.ngoModel
+        .findByIdAndUpdate(ngoId, { approved: true }, { new: true, session })
+        .exec();
+
+      if (!approvedNgo) {
+        throw new NotFoundException('NGO not found.');
+      }
+
+      // 2. Find the associated user and update their role
+      await this.userService.updateUserRoleByNgoId(
+        ngoId,
+        'NGO_ADMIN',
+        session
+      );
+
+      // Commit the transaction
+      await session.commitTransaction();
+      return approvedNgo;
+    } catch (error) {
+      // Abort the transaction on error
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-    return ngoUpdated;
   }
 
   async getUnapproved(){

@@ -95,7 +95,7 @@ export class AuthService {
                 ...user,
                 password: hashedPassword,
                 confirmPassword: hashedPassword,
-                ngoId: createdNgo._id,
+                ngoId: createdNgo._id.toString(),
                 role: Role.NGO_ADMIN_PENDING,
             });
             console.log('Usuário criado com sucesso:', user);
