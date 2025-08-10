@@ -6,8 +6,9 @@ import { JwtService} from '@nestjs/jwt';
 import { NgoService } from 'src/domain/ngo/ngo.service';
 import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Role } from 'src/core/enums/role.enum';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
 
-@Injectable()
 @Injectable()
 export class AuthService {
   constructor(
@@ -15,6 +16,7 @@ export class AuthService {
     private encryptionService: EncryptionService,
     private jwtService: JwtService,
     private ngoService: NgoService,
+    @InjectConnection() private connection: Connection,
   ) {}
 
     async validateUser(email: string, password: string): Promise<any> {
@@ -82,33 +84,48 @@ export class AuthService {
             throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
         }
 
-        // Cria ONG e conta institucional, garantindo que ambas as operações sejam atômicas, ou seja, se uma falhar, a outra deve ser revertida.
-        let createdNgo;
+        // Inicia uma sessão de transação
+        const session = await this.connection.startSession();
+
         try {
-            console.log(ngo);
-            createdNgo = await this.ngoService.create(ngo);
-            console.log('ONG criada com sucesso:', createdNgo);
+            // Inicia a transação
+            await session.withTransaction(async () => {
+                console.log('Iniciando transação para criação de ONG e usuário');
+                
+                // 1. Cria a ONG dentro da transação
+                console.log('Criando ONG:', ngo);
+                const createdNgo = await this.ngoService.create(ngo, session);
+                console.log('ONG criada com sucesso:', createdNgo);
 
-            const hashedPassword = await this.encryptionService.encryptPassword(user.password);
+                // 2. Prepara os dados do usuário
+                const hashedPassword = await this.encryptionService.encryptPassword(user.password);
+                
+                const userData = {
+                    ...user,
+                    password: hashedPassword,
+                    confirmPassword: hashedPassword,
+                    ngoId: createdNgo._id.toString(),
+                    role: Role.NGO_ADMIN_PENDING,
+                };
 
-            await this.userService.create({
-                ...user,
-                password: hashedPassword,
-                confirmPassword: hashedPassword,
-                ngoId: createdNgo._id.toString(),
-                role: Role.NGO_ADMIN_PENDING,
+                // 3. Cria o usuário dentro da transação
+                console.log('Criando usuário com dados:', userData);
+                const createdUser = await this.userService.create(userData, session);
+                console.log('Usuário criado com sucesso:', createdUser);
             });
-            console.log('Usuário criado com sucesso:', user);
 
+            console.log('Transação concluída com sucesso');
             return { message: 'ONG e conta administrativa criadas. Aguardando aprovação.' };
-            } catch (error) {
-            // Rollback manual caso a criação da conta de usuário falhe
-            if (createdNgo) {
-                await this.ngoService.delete(createdNgo._id).catch(err => {
-                console.error('Falha no rollback: não foi possível deletar a ONG órfã.', err);
-                });
-            }
-            throw new HttpException('Falha no cadastro da ONG.', HttpStatus.INTERNAL_SERVER_ERROR);
+
+        } catch (error) {
+            console.error('Erro durante a transação:', error);
+            throw new HttpException(
+                'Falha no cadastro da ONG: ' + error.message, 
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        } finally {
+            // Encerra a sessão
+            await session.endSession();
         }
     }
 }

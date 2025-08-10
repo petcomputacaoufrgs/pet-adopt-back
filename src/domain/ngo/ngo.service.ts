@@ -27,23 +27,27 @@ export class NgoService {
     return ngos;
   }
 
-  async create(createNgoDto: CreateNgoDto) {
+  async getApproved(){
+      return await this.ngoModel.find({ approved: true });
+  }
+
+  async getUnapproved(){
+      return await this.ngoModel.find({ approved: false });
+  }
+
+  async create(createNgoDto: CreateNgoDto, session: any) {
     const ngoCreated = new this.ngoModel({
         ...createNgoDto,
         approved: false  // Sempre falso para novas ONGs
     });
 
-    return await ngoCreated.save();
+    return await ngoCreated.save({ session });
   }
 
   async getById(id: string) {
     const ngo = await this.ngoModel.findById(id);
 
     return ngo;
-  }
-
-  async delete(id: string) {
-    const ngo = await this.ngoModel.findByIdAndDelete(id);
   }
   
   async update(id: string, updateNgoDto: UpdateNgoDto) {
@@ -54,13 +58,43 @@ export class NgoService {
     return ngoUpdated;
   }
 
-  async approve(ngoId: string): Promise<Ngo> {
-    // Start a transaction if your MongoDB setup supports it
+  async delete(id: string): Promise<{ message: string }> {
     const session = await this.ngoModel.startSession();
     session.startTransaction();
 
     try {
-      // 1. Approve the NGO
+      // 1. Verifica se a ONG existe antes de deletar
+      const ngoToDelete = await this.ngoModel.findById(id).session(session);
+      
+      if (!ngoToDelete) {
+        throw new NotFoundException('NGO not found.');
+      }
+
+      // 2. Delete a conta institucional associada primeiro
+      await this.userService.deleteByNgoId(id, session);
+
+      // 3. Delete a ONG
+      await this.ngoModel.findByIdAndDelete(id, { session });
+
+      // Salve a transação
+      await session.commitTransaction();
+      return { message: 'NGO and associated user deleted successfully.' };
+    } catch (error) {
+      // Aborte a transação em caso de erro
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  }
+
+  async approve(ngoId: string): Promise<Ngo> {
+    // Começa uma transação, o que garante que todas as operações sejam atômicas, ou seja, se uma falhar, a outra deve ser revertida.
+    const session = await this.ngoModel.startSession();
+    session.startTransaction();
+
+    try {
+      // 1. Aprove a ONG
       const approvedNgo = await this.ngoModel
         .findByIdAndUpdate(ngoId, { approved: true }, { new: true, session })
         .exec();
@@ -69,26 +103,22 @@ export class NgoService {
         throw new NotFoundException('NGO not found.');
       }
 
-      // 2. Find the associated user and update their role
+      // 2. Ache o usuário associado e atualize seu papel
       await this.userService.updateUserRoleByNgoId(
         ngoId,
         'NGO_ADMIN',
         session
       );
 
-      // Commit the transaction
+      // Salve a transação
       await session.commitTransaction();
       return approvedNgo;
     } catch (error) {
-      // Abort the transaction on error
+      // Aborte a transação em caso de erro
       await session.abortTransaction();
       throw error;
     } finally {
       session.endSession();
     }
-  }
-
-  async getUnapproved(){
-      return await this.ngoModel.find({ approved: false });
   }
 }

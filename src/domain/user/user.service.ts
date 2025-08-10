@@ -10,7 +10,7 @@ import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {} // uso da classe User do schema
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {} // Uso da classe User do schema
 
   async getAll(filters: any = {}) {
     // Remove filtros vazios
@@ -27,8 +27,8 @@ export class UserService {
     return users;
   }
 
-  async create(createUserDto: CreateUserDto) {
-    if ((createUserDto.role === Role.NGO_MEMBER || createUserDto.role == Role.NGO_ADMIN_PENDING) && !createUserDto.ngoId) {
+  async create(createUserDto: CreateUserDto, session?: any) {
+    if ((createUserDto.role === Role.NGO_MEMBER || createUserDto.role === Role.NGO_ADMIN_PENDING) && !createUserDto.ngoId) {
       throw new Error('NGO is required when role is NGO_MEMBER or NGO_ADMIN_PENDING');
     }
     
@@ -37,7 +37,12 @@ export class UserService {
     }
   
     const userCreated = new this.userModel(createUserDto);
-    return await userCreated.save();
+    
+    if (session) {
+      return await userCreated.save({ session });
+    } else {
+      return await userCreated.save();
+    }
   }
 
   async getById(id: string) {
@@ -59,6 +64,17 @@ export class UserService {
 
   async delete(id: string) {
     const user = await this.userModel.findByIdAndDelete(id);
+  }
+
+  async deleteByNgoId(ngoId: string, session: any) {
+    const result = await this.userModel.deleteOne({ ngoId }, { session });
+
+    // Registra se nenhum usuário foi encontrado
+    if (result.deletedCount === 0) {
+      console.warn(`No user found with ngoId: ${ngoId}`);
+    }
+    
+    return result;
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {

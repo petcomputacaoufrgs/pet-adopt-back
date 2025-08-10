@@ -27,9 +27,9 @@ export class NgoController {
     return this.ngoService.getUnapproved();
   }
 
-  @Post()
-  create(@Body(ValidationPipe, HasSocialMediaPipe) createNgoDto: CreateNgoDto) {
-    this.ngoService.create(createNgoDto);
+  @Get('/approved')
+  getApproved() {
+    return this.ngoService.getApproved();
   }
 
   @Get(':id')
@@ -40,7 +40,7 @@ export class NgoController {
   @Delete(':id')
   //@UseGuards(JwtAuthGuard, RolesGuard)
   //@Roles(Role.ADMIN)
-  delete(@Param('id') id: string) {
+  async deleteNgo(@Param('id') id: string) {
     return this.ngoService.delete(id);
   }
 
