@@ -28,6 +28,11 @@ export class User {
   })
   role: Role;
 
+  @Prop({
+    required: false,
+  })
+  approved: boolean;
+
   @Prop({ 
     type: String, 
     required: false 
