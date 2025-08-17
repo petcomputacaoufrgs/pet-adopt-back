@@ -6,8 +6,11 @@ import { JwtService} from '@nestjs/jwt';
 import { NgoService } from 'src/domain/ngo/ngo.service';
 import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Role } from 'src/core/enums/role.enum';
-import { InjectConnection } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { Connection } from 'mongoose';
+import { Response } from 'express'; // Response do Express, para trabalhar com cookies
+import { Token } from './schemas/token.schema';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
     private ngoService: NgoService,
     @InjectConnection() private connection: Connection,
+    @InjectModel(Token.name) private tokenModel: Model<Token>
   ) {}
 
     async validateUser(email: string, password: string): Promise<any> {
@@ -37,17 +41,54 @@ export class AuthService {
     }
 
     // Gera token JWT depois de validar usuário.
-    async login(user: any) {
-        // Dados de usuário que serão usados para criar o token.
-        const payload = {
+    async login(user: any, res: Response) {
+        // Payload para o token de acesso, incluindo informações do usuário
+        const accessTokenPayload = {
             email: user._doc.email,
             sub: user._doc._id,
             role: user._doc.role,
         };
-        
-        // Cria token.
+
+        // Geração dos tokens
+        const accessToken = this.jwtService.sign(accessTokenPayload);
+        const refreshToken = this.jwtService.sign(accessTokenPayload, {
+            secret: process.env.JWT_REFRESH_SECRET, // Use uma secret diferente e mais forte
+            expiresIn: '7d', // Token de refresh com validade mais longa
+        });
+
+        // Salvar o refresh token no banco de dados (whitelist)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); // Expiração em 7 dias
+
+        await this.tokenModel.create({
+            userId: user._doc._id,
+            token: refreshToken,
+            expiresAt,
+        });
+
+        // Configurar e enviar os cookies
+        res.cookie('access_token', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production', // Use HTTPS em produção
+            sameSite: 'strict',
+            expires: new Date(Date.now() + 15 * 60 * 1000), // Expira em 15 minutos
+        });
+
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expira em 7 dias
+        });
+
+        // Retornar um JSON simples sem os tokens
         return {
-            access_token: this.jwtService.sign(payload),
+            message: 'Login successful',
+            user: {
+                id: user._doc._id,
+                email: user._doc.email,
+                role: user._doc.role,
+            },
         };
     }
 

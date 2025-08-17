@@ -1,22 +1,20 @@
-import { Controller, Post, UseGuards, Request, Body, Get, HttpException } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Get, HttpException, Res } from '@nestjs/common';
 //import { AuthPayloadDTO } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/core/guards/local-auth.guard';
 import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
 import { NgoSignupDto } from './dtos/ngo-signup.dto';
+import { Response } from 'express'; // Response do Express, para trabalhar com cookies
 
 @Controller('auth')
 export class AuthController {
 
     constructor(private authService: AuthService) { }
 
+    @Post('login')
     @UseGuards(LocalAuthGuard)
-    @Post('/login')
-    async login(@Request() req) {
-        const token = this.authService.login(req.user);
-
-        if (!token) throw new HttpException('Invalid Credentials', 401);
-        return token;
+    async login(@Request() req, @Res({ passthrough: true }) res: Response) {
+        return this.authService.login(req.user, res);
     }
 
     @Post('signup/regular')

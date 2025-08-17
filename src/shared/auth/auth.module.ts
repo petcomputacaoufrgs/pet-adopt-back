@@ -9,6 +9,8 @@ import { NgoModule } from 'src/domain/ngo/ngo.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
+import { TokenSchema, Token } from './schemas/token.schema';
 
 @Module({
   providers: [AuthService, LocalStrategy, JwtStrategy],
@@ -18,8 +20,9 @@ import { JwtModule } from '@nestjs/jwt';
     EncryptionModule,
     PassportModule,
     ConfigModule,
+    MongooseModule.forFeature([{ name: Token.name, schema: TokenSchema }]),
     JwtModule.registerAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule], // MongooseModule is no longer needed here
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') },
