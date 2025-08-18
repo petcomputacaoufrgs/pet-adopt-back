@@ -7,7 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { HasSocialMediaPipe } from 'src/core/pipes/has-social-media.pipe';
 
 import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/core/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import { Roles } from 'src/core/decorators/roles.decorator';
 import { Role } from 'src/core/enums/role.enum';
