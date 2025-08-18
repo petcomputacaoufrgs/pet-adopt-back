@@ -21,7 +21,6 @@ export class AuthController {
     @Post('refresh')
     @UseGuards(RefreshTokenGuard)
     async refresh(@Body('refreshToken') refreshToken: string, @Res({ passthrough: true }) res: Response) {
-        // Agora o método refreshTokens já configura os cookies internamente
         return this.authService.refreshTokens(refreshToken, res);
     }
 

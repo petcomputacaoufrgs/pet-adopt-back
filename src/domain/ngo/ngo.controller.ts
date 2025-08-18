@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get,Query ,Param, Patch, Post } from '@nestjs/common';
 import { NgoService } from './ngo.service';
-import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
@@ -38,8 +37,8 @@ export class NgoController {
   }
 
   @Delete(':id')
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  //@Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async deleteNgo(@Param('id') id: string) {
     return this.ngoService.delete(id);
   }
@@ -50,8 +49,8 @@ export class NgoController {
   }
 
   @Patch(':id/approve')
-  //@UseGuards(JwtAuthGuard, RolesGuard)
-  //@Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   async approveNgo(@Param('id') id: string) {
     return this.ngoService.approve(id);
   }

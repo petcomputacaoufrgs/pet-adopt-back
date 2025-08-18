@@ -2,12 +2,21 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors(); // <-- Isso permite chamadas do React (ou qualquer frontend via HTTP)
-  // Podemos adicionar uma origem específica, para garantir que só o front tenha acesso, por segurança
+  app.use(cookieParser());
+
+  // Configuração CORS para permitir cookies e credenciais
+  app.enableCors({
+    origin: ['http://localhost:3000'], // URL do frontend
+    credentials: true, // Permite envio de cookies e credenciais
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Set-Cookie'], // Permite que o frontend acesse o header Set-Cookie
+  });
   
   app.setGlobalPrefix('api/v1');
 

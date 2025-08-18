@@ -15,11 +15,6 @@ export class UserController {
     return this.userService.getAll(query);
   }
 
-  @Post()
-  create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
-    this.userService.create(createUserDto);
-  }
-
   @Get(':name')
   getByName(@Param('name') name: string) {
     return this.userService.getByName(name);
