@@ -10,7 +10,7 @@ export class Pet {
   @Prop({
     required: true,
   })
-  age: number;
+  age: string;
   
   @Prop({
     required: true,
