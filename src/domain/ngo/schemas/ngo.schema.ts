@@ -54,11 +54,6 @@ export class Ngo extends Document {
 
   @Prop()
   claimForm: string;
-
-  @Prop({
-    default: false
-  })
-  approved: boolean;
 }
 
 export const NgoSchema = SchemaFactory.createForClass(Ngo);

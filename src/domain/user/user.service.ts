@@ -94,16 +94,8 @@ export class UserService {
     return user;
   }
 
-  async approveNGOAdmin(id: string, session: any): Promise<User> {
-    const user = await this.userModel.findByIdAndUpdate(id, { approved: true, role: Role.NGO_ADMIN }, { new: true, session });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
-
   async approveNGOMember(id: string, session: any): Promise<User> {
-    const user = await this.userModel.findByIdAndUpdate(id, { approved: true, role: Role.NGO_MEMBER }, { new: true, session });
+    const user = await this.userModel.findByIdAndUpdate(id, {role: Role.NGO_MEMBER }, { new: true, session });
     if (!user) {
       throw new NotFoundException('User not found');
     }

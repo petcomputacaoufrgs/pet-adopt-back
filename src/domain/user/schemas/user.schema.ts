@@ -25,13 +25,9 @@ export class User {
 
   @Prop({
     required: true,
+    enum: Role,
   })
   role: Role;
-
-  @Prop({
-    required: false,
-  })
-  approved: boolean;
 
   @Prop({ 
     type: String, 
