@@ -16,6 +16,7 @@ import {
   } from 'class-validator';
   // import { IsSponsorshipRequired } from './is-sponsorship-required';
   import { Species } from 'src/core/enums/species.enum';
+  import { Age } from 'src/core/enums/age.enum';
   
   export class CreatePetDto {
     @IsNotEmpty()
@@ -23,8 +24,8 @@ import {
     name: string;
   
     @IsNotEmpty()
-    @IsNumber()
-    age: number;
+    @IsEnum(Age)
+    age: string;
   
     @IsNotEmpty()
     @IsIn(['F', 'M'])
