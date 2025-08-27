@@ -8,11 +8,13 @@ import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Role } from 'src/core/enums/role.enum';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose'; // Adicione Types aqui
 import { Connection } from 'mongoose';
 import { Response } from 'express'; // Response do Express, para trabalhar com cookies
 import { Token } from './schemas/token.schema';
 import { UnauthorizedException } from '@nestjs/common';
+
+const MAX_TOKENS_PER_USER = 3;
 
 @Injectable()
 export class AuthService {
@@ -75,21 +77,36 @@ export class AuthService {
     }
 
     // Método privado para gerar tokens
-    private async generateTokens(payload: any) {
-        const accessToken = this.jwtService.sign(payload);
+    private async generateTokens(payload: any, deviceInfo?: string) {
+        const accessToken = this.jwtService.sign(payload, {
+            secret: this.configService.get('JWT_SECRET'),
+            expiresIn: this.configService.get('JWT_EXPIRES_IN'),
+        });
+        
         const refreshToken = this.jwtService.sign(payload, {
             secret: this.configService.get('REFRESH_JWT_SECRET'),
             expiresIn: this.configService.get('REFRESH_JWT_EXPIRES_IN'),
         });
 
-        // Usar a mesma lógica de expiração do .env para o banco de dados
         const refreshTokenExpiration = this.parseJwtExpiration(this.configService.get('REFRESH_JWT_EXPIRES_IN'));
         const expiresAt = new Date(Date.now() + refreshTokenExpiration);
 
-        await this.tokenModel.create({
+        // Limitar a 3 tokens por usuário (opcional)
+        const userTokenCount = await this.tokenModel.countDocuments({ userId: payload.sub });
+        if (userTokenCount >= MAX_TOKENS_PER_USER) {
+            // Remove o token mais antigo
+            const oldestToken = await this.tokenModel.findOne({ userId: payload.sub }).sort({ createdAt: 1 });
+            if (oldestToken) {
+                await this.tokenModel.deleteOne({ _id: oldestToken._id });
+            }
+        }
+
+        const savedToken = await this.tokenModel.create({
             userId: payload.sub,
             token: refreshToken,
             expiresAt,
+            deviceInfo: deviceInfo || 'Unknown', // Para identificar dispositivos
+            createdAt: new Date(),
         });
 
         return { accessToken, refreshToken };
@@ -147,20 +164,30 @@ export class AuthService {
             });
 
             // 2. Buscar o token no banco de dados (whitelist)
+            // Converter para ObjectId da forma correta
+            const userObjectId = Types.ObjectId.createFromHexString(decodedToken.sub);
+
             const storedToken = await this.tokenModel.findOne({
                 token: refreshToken,
-                userId: decodedToken.sub,
+                userId: userObjectId, // Usar ObjectId explícito
             });
 
-            // 3. Se o token não for encontrado ou tiver expirado, lançar erro
+            // 3. Verificar se o token existe e não expirou no banco
             if (!storedToken) {
-                throw new UnauthorizedException('Token de atualização inválido ou expirado');
+                throw new UnauthorizedException('Token de atualização não encontrado');
             }
 
-            // 4. Invalidar o refresh token antigo (deletar do banco de dados)
+            // 4. Verificar se o token não expirou no banco de dados
+            if (storedToken.expiresAt < new Date()) {
+                // Remove o token expirado
+                await this.tokenModel.deleteOne({ token: refreshToken });
+                throw new UnauthorizedException('Token de atualização expirado');
+            }
+
+            // 5. Invalidar o refresh token antigo (deletar do banco de dados)
             await this.tokenModel.deleteOne({ token: refreshToken });
 
-            // 5. Gerar novos tokens usando o método reutilizável
+            // 6. Gerar novos tokens usando o método reutilizável
             const payload = {
                 email: decodedToken.email,
                 sub: decodedToken.sub,
@@ -170,13 +197,28 @@ export class AuthService {
             const { accessToken: newAccessToken, refreshToken: newRefreshToken } = 
                 await this.generateTokens(payload);
 
-            // 6. Configurar cookies
+            // 7. Configurar cookies
             this.setCookies(res, newAccessToken, newRefreshToken);
 
             return { message: 'Tokens atualizados com sucesso' };
 
         } catch (error) {
-            // Capturar erros de verificação ou banco de dados e retornar 401
+            // Se for erro de JWT (token inválido/expirado), retornar erro específico
+            if (error.name === 'JsonWebTokenError') {
+                throw new UnauthorizedException('Token de atualização inválido');
+            }
+            
+            if (error.name === 'TokenExpiredError') {
+                throw new UnauthorizedException('Token de atualização expirado');
+            }
+            
+            // Se já for UnauthorizedException, re-lançar
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            
+            // Para outros erros, logar e retornar genérico
+            console.error('Erro inesperado no refresh token:', error);
             throw new UnauthorizedException('Token de atualização inválido ou expirado');
         }
     }
@@ -223,13 +265,9 @@ export class AuthService {
 
         try {
             // Inicia a transação
-            await session.withTransaction(async () => {
-                console.log('Iniciando transação para criação de ONG e usuário');
-                
+            await session.withTransaction(async () => {          
                 // 1. Cria a ONG dentro da transação
-                console.log('Criando ONG:', ngo);
                 const createdNgo = await this.ngoService.create(ngo, session);
-                console.log('ONG criada com sucesso:', createdNgo);
 
                 // 2. Prepara os dados do usuário
                 const hashedPassword = await this.encryptionService.encryptPassword(user.password);
@@ -243,12 +281,9 @@ export class AuthService {
                 };
 
                 // 3. Cria o usuário dentro da transação
-                console.log('Criando usuário com dados:', userData);
                 const createdUser = await this.userService.create(userData, session);
-                console.log('Usuário criado com sucesso:', createdUser);
             });
 
-            console.log('Transação concluída com sucesso');
             return { message: 'ONG e conta administrativa criadas. Aguardando aprovação.' };
 
         } catch (error) {
@@ -260,6 +295,36 @@ export class AuthService {
         } finally {
             // Encerra a sessão
             await session.endSession();
+        }
+    }
+
+    // Método para limpar tokens expirados
+    async cleanupExpiredTokens(): Promise<void> {
+        try {
+            const result = await this.tokenModel.deleteMany({
+                expiresAt: { $lt: new Date() }
+            });
+        } catch (error) {
+            console.error('Erro ao limpar tokens expirados:', error);
+        }
+    }
+
+    // Método para revogar todos os tokens de um usuário (logout de todos os dispositivos)
+    async revokeAllUserTokens(userId: string): Promise<void> {
+        try {
+            const userObjectId = Types.ObjectId.createFromHexString(userId);
+            const result = await this.tokenModel.deleteMany({ userId: userObjectId });
+        } catch (error) {
+            console.error('Erro ao revogar tokens do usuário:', error);
+        }
+    }
+
+    // Método para revogar um token específico (logout de um dispositivo)
+    async revokeSpecificToken(refreshToken: string): Promise<void> {
+        try {
+            const result = await this.tokenModel.deleteOne({ token: refreshToken });
+        } catch (error) {
+            console.error('Erro ao revogar token específico:', error);
         }
     }
 }

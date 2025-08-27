@@ -4,8 +4,9 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
 import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
 import { NgoSignupDto } from './dtos/ngo-signup.dto';
-import { Response } from 'express'; // Response do Express, para trabalhar com cookies
-import { RefreshTokenGuard } from './guards/refresh-token.guard';
+import { Response, Request as ExpressRequest } from 'express'; // Para trabalhar com cookies
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from 'src/core/guards/roles.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -18,9 +19,43 @@ export class AuthController {
         return this.authService.login(req.user, res);
     }
 
+    @Post('logout')
+    async logout(@Request() req: ExpressRequest, @Res({ passthrough: true }) res: Response) {
+        const refreshToken = req.cookies?.refresh_token;
+        
+        if (refreshToken) {
+            // Revogar o token específico
+            await this.authService.revokeSpecificToken(refreshToken);
+        }
+        
+        // Limpar cookies
+        res.clearCookie('access_token');
+        res.clearCookie('refresh_token');
+        
+        return { message: 'Logout realizado com sucesso' };
+    }
+
+    @Post('logout-all')
+    @UseGuards(JwtAuthGuard) // Precisa estar autenticado
+    async logoutAll(@Request() req, @Res({ passthrough: true }) res: Response) {
+        // Revogar todos os tokens do usuário
+        await this.authService.revokeAllUserTokens(req.user.sub);
+        
+        // Limpar cookies
+        res.clearCookie('access_token');
+        res.clearCookie('refresh_token');
+        
+        return { message: 'Logout de todos os dispositivos realizado com sucesso' };
+    }
+
     @Post('refresh')
-    @UseGuards(RefreshTokenGuard)
-    async refresh(@Body('refreshToken') refreshToken: string, @Res({ passthrough: true }) res: Response) {
+    async refresh(@Request() req: ExpressRequest, @Res({ passthrough: true }) res: Response) {
+        const refreshToken = req.cookies?.refresh_token;
+        
+        if (!refreshToken) {
+            throw new HttpException('Token de atualização não encontrado', 401);
+        }
+        
         return this.authService.refreshTokens(refreshToken, res);
     }
 

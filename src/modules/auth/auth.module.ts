@@ -13,9 +13,10 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TokenSchema, Token } from './schemas/token.schema';
+import { TokenCleanupService } from './services/token-cleanup.service';
 
 @Module({
-  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshTokenStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshTokenStrategy, TokenCleanupService],
   imports: [
     UserModule,
     NgoModule,
@@ -27,11 +28,11 @@ import { TokenSchema, Token } from './schemas/token.schema';
       imports: [ConfigModule], // MongooseModule is no longer needed here
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
+  exports: [TokenCleanupService],
 })
 export class AuthModule {}
