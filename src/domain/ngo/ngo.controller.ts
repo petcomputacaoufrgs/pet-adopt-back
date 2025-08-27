@@ -18,17 +18,12 @@ export class NgoController {
 
   @Get()
   getAll(@Query() query: any) {
-    return this.ngoService.getAll(query);
+    return this.ngoService.getApproved(query);
   }
 
   @Get('/unapproved')
   getUnapproved() {
     return this.ngoService.getUnapproved();
-  }
-
-  @Get('/approved')
-  getApproved() {
-    return this.ngoService.getApproved();
   }
 
   @Get(':id')

@@ -194,8 +194,12 @@ export class AuthService {
 
         const hashedPassword = await this.encryptionService.encryptPassword(signupDto.password);
         
+        // Define o role como NGO_MEMBER_PENDING apenas se não for NGO_ADMIN
+        const userRole = signupDto.role === Role.NGO_ADMIN ? Role.NGO_ADMIN : Role.NGO_MEMBER_PENDING;
+        
         await this.userService.create({
         ...signupDto,
+        role: userRole,
         password: hashedPassword,
         confirmPassword: hashedPassword,
         });
