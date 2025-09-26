@@ -6,6 +6,7 @@ import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
 import { UserService } from '../user/user.service';
 import { filter } from 'rxjs';
+import { Role } from 'src/core/enums/role.enum';
 
 @Injectable()
 export class NgoService {
@@ -21,18 +22,36 @@ export class NgoService {
       if (typeof filters[key] === 'string') filters[key] = filters[key].replace(/^"+|"+$/g, '').replace(/^'+|'+$/g, '');
     });
 
-    
     const ngos = await this.ngoModel.find(filters);
 
     return ngos;
   }
 
-  async getApproved(){
-      return await this.ngoModel.find({ approved: true });
+  async getApproved(filters: any = {}){
+    // Remove empty filters
+    Object.keys(filters).forEach(key => {
+      if (!filters[key]) delete filters[key];
+      if (typeof filters[key] === 'string') filters[key] = filters[key].replace(/^"+|"+$/g, '').replace(/^'+|'+$/g, '');
+    });
+
+    // Busca NGOs cujos usuários administradores têm role NGO_ADMIN (aprovados)
+    const approvedUsers = await this.userService.getByRole(Role.NGO_ADMIN);
+    const ngoIds = approvedUsers.map(user => user.ngoId);
+    
+    // Combina o filtro de NGOs aprovadas com os filtros recebidos
+    const combinedFilters = {
+      ...filters,
+      _id: { $in: ngoIds }
+    };
+
+    return await this.ngoModel.find(combinedFilters);
   }
 
   async getUnapproved(){
-      return await this.ngoModel.find({ approved: false });
+    // Busca NGOs cujos usuários administradores têm role NGO_ADMIN_PENDING (pendentes)
+    const pendingUsers = await this.userService.getByRole(Role.NGO_ADMIN_PENDING);
+    const ngoIds = pendingUsers.map(user => user.ngoId);
+    return await this.ngoModel.find({ _id: { $in: ngoIds } });
   }
 
   async create(createNgoDto: CreateNgoDto, session: any) {
@@ -89,32 +108,26 @@ export class NgoService {
   }
 
   async approve(ngoId: string): Promise<Ngo> {
-    // Começa uma transação, o que garante que todas as operações sejam atômicas, ou seja, se uma falhar, a outra deve ser revertida.
     const session = await this.ngoModel.startSession();
     session.startTransaction();
 
     try {
-      // 1. Aprove a ONG
-      const approvedNgo = await this.ngoModel
-        .findByIdAndUpdate(ngoId, { approved: true }, { new: true, session })
-        .exec();
-
-      if (!approvedNgo) {
+      // Verifica se a NGO existe
+      const ngo = await this.ngoModel.findById(ngoId).session(session);
+      if (!ngo) {
         throw new NotFoundException('NGO not found.');
       }
 
-      // 2. Ache o usuário associado e atualize seu papel
+      // Atualiza o role do usuário de NGO_ADMIN_PENDING para NGO_ADMIN
       await this.userService.updateUserRoleByNgoId(
         ngoId,
         'NGO_ADMIN',
         session
       );
 
-      // Salve a transação
       await session.commitTransaction();
-      return approvedNgo;
+      return ngo;
     } catch (error) {
-      // Aborte a transação em caso de erro
       await session.abortTransaction();
       throw error;
     } finally {

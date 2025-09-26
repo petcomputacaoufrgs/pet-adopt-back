@@ -43,6 +43,7 @@ export class AuthService {
             email: user._doc.email,
             sub: user._doc._id,
             role: user._doc.role,
+            ngoid: user._doc.ngoId
         };
         
         // Cria token.
