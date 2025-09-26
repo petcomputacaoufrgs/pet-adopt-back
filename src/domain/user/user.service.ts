@@ -7,6 +7,7 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
 import { filter } from 'rxjs';
 import { NotFoundException } from '@nestjs/common';
+import { Ngo } from '../ngo/schemas/NGO.schema';
 
 @Injectable()
 export class UserService {
@@ -26,6 +27,8 @@ export class UserService {
 
     return users;
   }
+
+
 
   async create(createUserDto: CreateUserDto, session?: any) {
     if ((createUserDto.role === Role.NGO_MEMBER || createUserDto.role === Role.NGO_ADMIN_PENDING) && !createUserDto.ngoId) {
@@ -58,12 +61,20 @@ export class UserService {
     return await this.userModel.findOne({ email }).select('+password');
   }
 
+  async getByNGO(ngoId: string): Promise<User[]> {
+    return await this.userModel.find({ ngoId });
+  }
+
   async getByRole(role: Role): Promise<User[]> {
     return await this.userModel.find({ role });
   }
-
   async delete(id: string) {
     const user = await this.userModel.findByIdAndDelete(id);
+  }
+
+  async getUnapprovedMembers(ngoId: string): Promise<User[]> {
+    
+    return await this.userModel.find({ngoId,role: Role.NGO_MEMBER_PENDING});
   }
 
   async deleteByNgoId(ngoId: string, session: any) {

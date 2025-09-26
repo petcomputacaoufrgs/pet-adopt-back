@@ -15,9 +15,9 @@ export class UserController {
     return this.userService.getAll(query);
   }
 
-  @Post()
-  create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
-    this.userService.create(createUserDto);
+  @Get('unapprovedMembers/:ngoId')
+  getUnapprovedMembers(@Param('ngoId') ngoId: string) {
+    return this.userService.getUnapprovedMembers(ngoId);
   }
 
   @Get(':name')
