@@ -15,12 +15,6 @@ export class UserController {
     return this.userService.getAll(query);
   }
 
-  @Get('unapprovedMembers/:ngoId')
-  getUnapprovedMembers(@Param('ngoId') ngoId: string) {
-    return this.userService.getUnapprovedMembers(ngoId);
-  }
-
-
   @Get(':name')
   getByName(@Param('name') name: string) {
     return this.userService.getByName(name);
@@ -35,7 +29,6 @@ export class UserController {
   getByRole(@Param('role') role: Role) {
     return this.userService.getByRole(role);
   }
-  
 
   @Delete(':id')
   delete(@Param('id') id: string) {

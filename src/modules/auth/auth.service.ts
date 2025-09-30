@@ -121,7 +121,11 @@ export class AuthService {
         // Verificação da senha (com criptografia)
         if (this.encryptionService.comparePassword(user.password, password)){
             // Remove campo sensível de senha antes de retornar um objeto usuário.
+<<<<<<< HEAD
             const { password, ...result } = user;  // decidir se o campo confirmPassword é necessário
+=======
+            const { password, ...result } = user;
+>>>>>>> main
             return result;
         }
         else
@@ -151,6 +155,11 @@ export class AuthService {
                 id: user._doc._id,
                 email: user._doc.email,
                 role: user._doc.role,
+<<<<<<< HEAD
+=======
+                ngoId: user._doc.ngoId || null,
+                name: user._doc.name,
+>>>>>>> main
             },
         };
     }
@@ -164,15 +173,25 @@ export class AuthService {
             });
 
             // 2. Buscar o token no banco de dados (whitelist)
+<<<<<<< HEAD
             // Converter para ObjectId da forma correta
+=======
+>>>>>>> main
             const userObjectId = Types.ObjectId.createFromHexString(decodedToken.sub);
 
             const storedToken = await this.tokenModel.findOne({
                 token: refreshToken,
+<<<<<<< HEAD
                 userId: userObjectId, // Usar ObjectId explícito
             });
 
             // 3. Verificar se o token existe e não expirou no banco
+=======
+                userId: userObjectId,
+            });
+
+            // 3. Verificar se o token existe
+>>>>>>> main
             if (!storedToken) {
                 throw new UnauthorizedException('Token de atualização não encontrado');
             }

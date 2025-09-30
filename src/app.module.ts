@@ -4,7 +4,7 @@ import { PetModule } from './domain/pet/pet.module';
 import { NgoModule } from './domain/ngo/ngo.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './domain/user/user.module';
-import { AuthModule } from './shared/auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
