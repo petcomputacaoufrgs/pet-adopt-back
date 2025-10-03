@@ -8,10 +8,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
+  
+  
+  const configService = app.get(ConfigService);
+
+  // pega variáveis do .env
+  const frontendUrl =
+    configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+  const port = configService.get<string>('PORT') || '3002';
 
   // Configuração CORS para permitir cookies e credenciais
   app.enableCors({
-    origin: ['http://localhost:3000'], // URL do frontend
+    origin: [frontendUrl], // URL do frontend
     credentials: true, // Permite envio de cookies e credenciais
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -20,8 +28,7 @@ async function bootstrap() {
   
   app.setGlobalPrefix('api/v1');
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<string>('PORT', '3000');
+
   const config = new DocumentBuilder()
     .setTitle('PetAdopt - V1')
     .setDescription('Pet Adopt API Documentation')
@@ -31,7 +38,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0'); // Escuta em todas as interfaces de rede
   console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
