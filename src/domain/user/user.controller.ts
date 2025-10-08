@@ -5,14 +5,32 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Role } from '../../core/enums/role.enum';
 
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/core/guards/roles.guard';
+import { Roles } from 'src/core/decorators/roles.decorator';
+
 @ApiTags('users')
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
+  
+  
+
 
   @Get()
   getAll(@Query () query: any) {
     return this.userService.getAll(query);
+  }
+
+  @Get('unapprovedMembers/:ngoId')
+  getUnapprovedMembers(@Param('ngoId') ngoId: string) {
+    return this.userService.getUnapprovedMembers(ngoId);
+  }
+
+  @Get('approvedMembers/:ngoId')
+  getAnapprovedMembers(@Param('ngoId') ngoId: string) {
+    return this.userService.getApprovedMembers(ngoId);
   }
 
   @Get(':name')
@@ -24,6 +42,7 @@ export class UserController {
   getById(@Param('id') id: string) {
     return this.userService.getById(id);
   }
+
 
   @Get('role/:role')
   getByRole(@Param('role') role: Role) {
@@ -38,5 +57,12 @@ export class UserController {
   @Patch(':id')
   update(@Param('id') id: string, @Body(ValidationPipe) updateUserDto: UpdateUserDto) {
     this.userService.update(id, updateUserDto);
+  }
+
+  @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.NGO_ADMIN)
+  async approveNgo(@Param('id') id: string) {
+    return this.userService.approve(id);
   }
 }

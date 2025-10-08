@@ -58,10 +58,6 @@ export class UserService {
     return await this.userModel.findOne({ email }).select('+password');
   }
 
-  async getByNGO(ngoId: string): Promise<User[]> {
-    return await this.userModel.find({ ngoId });
-  }
-
   async getByRole(role: Role): Promise<User[]> {
     return await this.userModel.find({ role });
   }
@@ -71,6 +67,10 @@ export class UserService {
 
   async getUnapprovedMembers(ngoId: string): Promise<User[]> {
     return await this.userModel.find({ngoId,role: Role.NGO_MEMBER_PENDING});
+  }
+
+  async getApprovedMembers(ngoId: string): Promise<User[]> {
+    return await this.userModel.find({ngoId,role: Role.NGO_MEMBER});
   }
   
   async deleteByNgoId(ngoId: string, session: any) {
@@ -101,8 +101,8 @@ export class UserService {
     return user;
   }
 
-  async approveNGOMember(id: string, session: any): Promise<User> {
-    const user = await this.userModel.findByIdAndUpdate(id, {role: Role.NGO_MEMBER }, { new: true, session });
+  async approve(id: string): Promise<User> {
+    const user = await this.userModel.findByIdAndUpdate(id, {role: Role.NGO_MEMBER }, { new: true });
     if (!user) {
       throw new NotFoundException('User not found');
     }
