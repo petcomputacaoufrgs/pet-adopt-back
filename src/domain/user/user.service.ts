@@ -65,12 +65,22 @@ export class UserService {
     const user = await this.userModel.findByIdAndDelete(id);
   }
 
-  async getUnapprovedMembers(ngoId: string): Promise<User[]> {
-    return await this.userModel.find({ngoId,role: Role.NGO_MEMBER_PENDING});
+  async getUnapprovedMembers(ngoId: string, filters: any = {}): Promise<User[]> {
+    const query: any = { ngoId, role: Role.NGO_MEMBER_PENDING };
+    if (filters.name) {
+      query.name = { $regex: new RegExp(filters.name, 'i') };
+    }
+    return await this.userModel.find(query);
   }
 
-  async getApprovedMembers(ngoId: string): Promise<User[]> {
-    return await this.userModel.find({ngoId,role: Role.NGO_MEMBER});
+  async getApprovedMembers(ngoId: string, filters: any = {}): Promise<User[]> {
+    const query: any = { ngoId, role: Role.NGO_MEMBER };
+
+    if (filters.name) {
+      query.name = { $regex: new RegExp(filters.name, 'i') };
+    }
+
+    return await this.userModel.find(query);
   }
   
   async deleteByNgoId(ngoId: string, session: any) {

@@ -24,13 +24,15 @@ export class UserController {
   }
 
   @Get('unapprovedMembers/:ngoId')
-  getUnapprovedMembers(@Param('ngoId') ngoId: string) {
-    return this.userService.getUnapprovedMembers(ngoId);
+  getUnapprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {
+    return this.userService.getUnapprovedMembers(ngoId, query);
   }
 
+ 
+
   @Get('approvedMembers/:ngoId')
-  getAnapprovedMembers(@Param('ngoId') ngoId: string) {
-    return this.userService.getApprovedMembers(ngoId);
+  getAnapprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {
+    return this.userService.getApprovedMembers(ngoId, query);
   }
 
   @Get(':name')
