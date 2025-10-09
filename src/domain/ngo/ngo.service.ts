@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Ngo } from './schemas/NGO.schema';
+import { Ngo } from './schemas/ngo.schema';
 import { Model } from 'mongoose';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
