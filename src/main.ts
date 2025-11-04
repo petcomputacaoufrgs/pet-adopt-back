@@ -3,14 +3,21 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(cookieParser());
   
   
   const configService = app.get(ConfigService);
+
+  // Servir arquivos estáticos da pasta uploads
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
 
   // pega variáveis do .env
   const frontendUrl =
@@ -40,5 +47,7 @@ async function bootstrap() {
 
   await app.listen(port, '0.0.0.0'); // Escuta em todas as interfaces de rede
   console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`Swagger documentation available at: ${await app.getUrl()}/api`);
+  console.log(`Static files served from: ${await app.getUrl()}/uploads/`);
 }
 bootstrap();
