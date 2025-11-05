@@ -1,16 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pet } from './schemas/pet.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreatePetDto } from './dtos/create-pet.dto';
 import { UpdatePetDto } from './dtos/update-pet.dto';
 import { Species } from 'src/core/enums/species.enum';
+import { StatisticsService } from '../statistics/statistics.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
 @Injectable()
 export class PetService {
-  constructor(@InjectModel(Pet.name) private petModel: Model<Pet>) {}
+  constructor(@InjectModel(Pet.name) private petModel: Model<Pet>, private statisticsService: StatisticsService) {}
 
   async getAll(filters: any = {}) {
     // Remove filtros vazios
@@ -34,16 +35,50 @@ export class PetService {
 
     petCreated.species = (createPetDto.species === Species.OTHER) ? createPetDto.otherSpecies : createPetDto.species;
 
+    // Salvar id na coleção statistics
+    await this.statisticsService.addRecentPet(petCreated._id);
+
     return await petCreated.save();
   }
 
-  async getById(id: string) { 
+ async getById(id: string) { 
+  try {
+    // Verifica se o id é válido
+    if (!Types.ObjectId.isValid(id)) {
+      throw new NotFoundException('Invalid pet ID format');
+    }
+
     const pet = await this.petModel.findById(id);
+    if (!pet) {
+      throw new NotFoundException('Pet not found');
+    }
+
     return pet;
+  } catch (error) {
+    if (error instanceof NotFoundException) {
+      throw error;
+    }
+    throw new NotFoundException('Pet not found');
   }
+}
+
+  async getRecentPets() {
+    const petIds = await this.statisticsService.getRecentPetIDs();
+    if (!petIds.length) return [];
+
+    // Uma única query para buscar todos os pets
+    const pets = await this.petModel.find({
+        '_id': { $in: petIds }
+    });
+
+    // Mantém a ordem original dos IDs
+    return petIds
+      .map(id => pets.find(pet => pet._id.equals(id)))
+      .filter(Boolean);
+}
 
   async updatePartial(id: string, updatePetDto: UpdatePetDto) {
-    const existingPet = await this.petModel.findById(id);
+    const existingPet = await this.petModel.findById(id.toString());
     if (!existingPet) return null;
 
     // Normalizar arrays recebidos

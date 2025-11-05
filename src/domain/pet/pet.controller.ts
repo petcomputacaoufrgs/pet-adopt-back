@@ -55,6 +55,11 @@ export class PetController {
 
    return this.petService.create(createPetDto);
  }
+  
+  @Get('recent')
+    async getRecentPets() {
+        return this.petService.getRecentPets();
+  }
 
   @Get(':id')
   getById(@Param('id') id: string) {

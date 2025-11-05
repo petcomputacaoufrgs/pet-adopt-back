@@ -3,6 +3,7 @@ import { PetController } from './pet.controller';
 import { PetService } from './pet.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Pet, PetSchema } from './schemas/pet.schema';
+import { StatisticsModule } from '../statistics/statistics.module';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { Pet, PetSchema } from './schemas/pet.schema';
         name: Pet.name,
         schema: PetSchema,
       },
-    ]),
+    ]), 
+    StatisticsModule
   ],
   controllers: [PetController],
   providers: [PetService],
