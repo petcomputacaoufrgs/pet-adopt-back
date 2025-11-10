@@ -36,7 +36,7 @@ export class Pet {
   @Prop({
     required: true,
   })
-  NGO: string;
+  ngoId: string;
 
   @Prop({
     required: true,

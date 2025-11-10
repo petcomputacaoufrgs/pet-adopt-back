@@ -53,7 +53,7 @@ import {
     characteristics: string;
   
     @IsNotEmpty()
-    NGO: string;
+    ngoId: string;
   
     @IsNotEmpty()
     @IsIn(['Available', 'Adopted', 'TempHome'])
