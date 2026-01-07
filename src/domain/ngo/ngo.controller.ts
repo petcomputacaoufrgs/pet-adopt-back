@@ -26,6 +26,12 @@ export class NgoController {
     return this.ngoService.getUnapproved();
   }
 
+  @Get(':id/is-approved')
+  async isApproved(@Param('id') id: string) {
+    const approved = await this.ngoService.is_approved(id);
+    return { approved };
+  }
+
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.ngoService.getById(id);
@@ -49,4 +55,6 @@ export class NgoController {
   async approveNgo(@Param('id') id: string) {
     return this.ngoService.approve(id);
   }
+
+  
 }

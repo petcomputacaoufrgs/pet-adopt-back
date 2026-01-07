@@ -134,4 +134,11 @@ export class NgoService {
       session.endSession();
     }
   }
+
+  async is_approved(ngoId: string): Promise<boolean> {
+    //Verifica se entre os usuários NGO_ADMIN um deles faz parte da ong
+    const approvedAdmin = await this.userService.getByRole(Role.NGO_ADMIN);
+    return approvedAdmin.some(user => user.ngoId === ngoId);
+  }
+
 }
