@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Body, Get, HttpException, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, HttpException, Res } from '@nestjs/common';
 //import { AuthPayloadDTO } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
@@ -7,6 +7,7 @@ import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Response, Request as ExpressRequest } from 'express'; // Para trabalhar com cookies
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from 'src/core/guards/roles.guard';
+import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -67,5 +68,11 @@ export class AuthController {
     @Post('signup/ngo')
     async signupNgo(@Body() signupDto: NgoSignupDto) {
         return this.authService.signupNgoAdmin(signupDto);
+    }
+
+    @Patch(':userId')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    async updateNgoInfo(@Param('userId') userId: string, @Body() updateData: UpdateNgoDto) {
+        return this.authService.updateNgoProfile(userId, updateData);
     }
 }

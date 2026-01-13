@@ -94,9 +94,12 @@ export class UserService {
     return result;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true });
-    return await userUpdated.save();
+  async update(id: string, updateUserDto: UpdateUserDto, session?: any) {
+    const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true, session });
+    if (!userUpdated) {
+      throw new NotFoundException('User not found');
+    }
+    return userUpdated;
   }
 
   async updateUserRoleByNgoId(ngoId: string, newRole: string, session: any): Promise<User> {

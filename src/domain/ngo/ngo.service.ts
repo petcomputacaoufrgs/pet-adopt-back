@@ -65,12 +65,15 @@ export class NgoService {
 
   async getById(id: string) {
     const ngo = await this.ngoModel.findById(id);
-
     return ngo;
   }
+
+  async getByEmail(email: string): Promise<Ngo | undefined> {
+      return await this.ngoModel.findOne({ email });
+  }
   
-  async update(id: string, updateNgoDto: UpdateNgoDto) {
-    const ngoUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true });
+  async update(id: string, updateNgoDto: UpdateNgoDto, session?: any) {
+    const ngoUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true, session });
     if (!ngoUpdated) {
         throw new NotFoundException('NGO not found');
     }
