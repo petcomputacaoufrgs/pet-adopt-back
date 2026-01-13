@@ -7,4 +7,7 @@ export class UpdatePetDto extends PartialType(CreatePetDto) {
     @IsArray()
     @ArrayMaxSize(10)
     existingPhotos: string[];
+
+    @IsOptional()
+    photoOrder: string;
 }

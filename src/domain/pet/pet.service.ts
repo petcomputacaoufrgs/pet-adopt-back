@@ -81,23 +81,41 @@ export class PetService {
     const existingPet = await this.petModel.findById(id.toString());
     if (!existingPet) return null;
 
-    // Normalizar arrays recebidos
-    const newPhotos = updatePetDto.photos ?? []; // fotos recém enviadas (ex: ['/uploads/xxx.jpg'])
-    const keptPhotos = updatePetDto.existingPhotos ?? []; // URLs que frontend quer manter
+    let finalPhotoList: string[] = [];
 
-    // Montar lista final sem duplicatas
-    const photosSet = new Set<string>([...newPhotos, ...keptPhotos]);
-    const photosToKeep = Array.from(photosSet);
+    // Se temos uma ordem definida vindo do front
+    if (updatePetDto.photoOrder) {
+        // Faz o parse do JSON string para array
+        const orderMap = JSON.parse(updatePetDto.photoOrder) as string[];
+        
+        // Criamos uma cópia mutável da lista de arquivos novos para ir consumindo
+        // O Multer garante que a ordem do array 'photos' é a mesma ordem do append no frontend
+        const newFilesQueue = updatePetDto.photos ? [...updatePetDto.photos] : [];
+
+        finalPhotoList = orderMap.map(item => {
+            if (item === "NEW_FILE_MARKER") {
+                // Se é um marcador, pegamos o próximo arquivo da fila
+                return newFilesQueue.shift();
+            } else {
+                // Se não é marcador, é a URL antiga
+                return item;
+            }
+        }).filter(item => item !== null) as string[]; // Remove possíveis nulos
+        
+    } else {
+        // FALLBACK: Se por algum motivo não veio o photoOrder (não deveria acontecer), mantemos as fotos existentes
+        finalPhotoList = existingPet.photos; 
+    }
 
     // Atualizar documento no banco (sobrescreve campo photos com a lista final)
     const updatedPet = await this.petModel.findByIdAndUpdate(
       id,
-      { ...updatePetDto, photos: photosToKeep },
+      { ...updatePetDto, photos: finalPhotoList },
       { new: true, runValidators: true }
     );
 
     // depois da atualização, remover os ficheiros que não serão mantidos
-    const photosToDelete = (existingPet.photos ?? []).filter(p => !photosToKeep.includes(p));
+    const photosToDelete = (existingPet.photos ?? []).filter(p => !finalPhotoList.includes(p));
     if (photosToDelete.length > 0) {
       await this.deletePhotoFiles(photosToDelete);
     }
