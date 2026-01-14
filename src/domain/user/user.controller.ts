@@ -14,9 +14,6 @@ import { Roles } from 'src/core/decorators/roles.decorator';
 @Controller('users')
 export class UserController {
   constructor(private userService: UserService) {}
-  
-  
-
 
   @Get()
   getAll(@Query () query: any) {
@@ -27,8 +24,6 @@ export class UserController {
   getUnapprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {
     return this.userService.getUnapprovedMembers(ngoId, query);
   }
-
- 
 
   @Get('approvedMembers/:ngoId')
   getAnapprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {

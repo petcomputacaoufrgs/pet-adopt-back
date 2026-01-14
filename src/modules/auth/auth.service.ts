@@ -8,11 +8,11 @@ import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Role } from 'src/core/enums/role.enum';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
-import { Model, Types } from 'mongoose'; // Adicione Types aqui
-import { Connection } from 'mongoose';
+import { Model, Types, Connection } from 'mongoose';
 import { Response } from 'express'; // Response do Express, para trabalhar com cookies
 import { Token } from './schemas/token.schema';
 import { UnauthorizedException } from '@nestjs/common';
+import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
 
 const MAX_TOKENS_PER_USER = 3;
 
@@ -246,6 +246,10 @@ export class AuthService {
         password: hashedPassword,
         confirmPassword: hashedPassword,
         });
+
+        return { 
+            message: 'Usuário criado com sucesso',
+        };
     }
 
     // Método para signup de Admin de ONG
@@ -256,9 +260,14 @@ export class AuthService {
             throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
         }
         
-        const existingUser = await this.userService.getByEmail(user.email);
-        if (existingUser) {
-            throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
+        const existingAdmin= await this.userService.getByEmail(user.email);
+        if (existingAdmin) {
+            if (existingAdmin.role == Role.NGO_ADMIN) {
+                throw new HttpException('Já existe uma ONG registrada com este e-mail, faça login na ONG ou crie uma conta membro da ONG.', HttpStatus.CONFLICT);
+            }
+            if (existingAdmin.role == Role.NGO_ADMIN_PENDING) {
+                throw new HttpException('Já existe uma solicitação de ONG registrada com este e-mail, aguarde a aprovação da ONG.', HttpStatus.CONFLICT);
+            }
         }
 
         // Inicia uma sessão de transação
@@ -295,6 +304,32 @@ export class AuthService {
             );
         } finally {
             // Encerra a sessão
+            await session.endSession();
+        }
+    }
+
+    // Recebe o id da conta institucional (NGO_ADMIN) e os dados para atualizar a ONG 
+    async updateNgoProfile(userId: string, updateDto: UpdateNgoDto) {
+        const user = await this.userService.getById(userId);
+        
+        if (!user.ngoId || user.role !== Role.NGO_ADMIN) {
+            throw new UnauthorizedException('Apenas administradores de ONG podem atualizar');
+        }
+
+        const session = await this.connection.startSession();
+        
+        try {
+            await session.withTransaction(async () => {     
+                // Atualiza NGO com TODOS os campos
+                await this.ngoService.update(user.ngoId, updateDto, session);
+                
+                // Atualiza User apenas com nome caso tenha sido alterado
+                if (updateDto.name) {
+                    await this.userService.update(userId, { name: updateDto.name }, session);
+                }
+            });
+            return { message: 'Perfil institucional atualizado com sucesso' };
+        } finally {
             await session.endSession();
         }
     }
