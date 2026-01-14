@@ -39,7 +39,7 @@ export class NgoController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.NGO_ADMIN)
   async deleteNgo(@Param('id') id: string) {
     return this.ngoService.delete(id);
   }
