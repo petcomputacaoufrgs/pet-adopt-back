@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common'; 
-import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
+import { BasicUserDto, NgoMemberDto } from 'src/domain/user/dtos/create-user.dto';
 import { UserService } from 'src/domain/user/user.service';
 import { EncryptionService } from '../encryption/encryption.service';
 import { JwtService} from '@nestjs/jwt';
@@ -13,6 +13,7 @@ import { Response } from 'express'; // Response do Express, para trabalhar com c
 import { Token } from './schemas/token.schema';
 import { UnauthorizedException } from '@nestjs/common';
 import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
+import { Ngo } from 'src/domain/ngo/schemas/ngo.schema';
 
 const MAX_TOKENS_PER_USER = 3;
 
@@ -224,36 +225,51 @@ export class AuthService {
         }
     }
 
-    // Método de signup para usuários comuns (membros de ONG e admins do site)
-    async signupRegularUser(signupDto: CreateUserDto): Promise<any> {
-        if (signupDto.password !== signupDto.confirmPassword) {
-        throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
+    // Validações
+    private validatePasswordMatch(password: string, confirmPassword: string): void {
+        if (password !== confirmPassword) {
+            throw new HttpException('Há diferença entre as senhas.', HttpStatus.BAD_REQUEST);
         }
-        
-        const existingUser = await this.userService.getByEmail(signupDto.email);
+    }
+
+    private async validateEmailNotExists(email: string): Promise<void> {
+        const existingUser = await this.userService.getByEmail(email);
         if (existingUser) {
-        throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
+            throw new HttpException('Este e-mail já foi cadastrado', HttpStatus.CONFLICT);
         }
+    }
+
+    // Método genérico para criar usuários (não é usado para conta institucional de ONG)
+    private async createUser(signupDto: BasicUserDto | NgoMemberDto, role: Role): Promise<any> {
+        this.validatePasswordMatch(signupDto.password, signupDto.confirmPassword);
+        await this.validateEmailNotExists(signupDto.email);
 
         const hashedPassword = await this.encryptionService.encryptPassword(signupDto.password);
         
-        // Define o role como NGO_MEMBER_PENDING apenas se não for NGO_ADMIN
-        const userRole = signupDto.role === Role.NGO_ADMIN ? Role.NGO_ADMIN : Role.NGO_MEMBER_PENDING;
-        
         await this.userService.create({
-        ...signupDto,
-        role: userRole,
-        password: hashedPassword,
-        confirmPassword: hashedPassword,
+            ...signupDto,
+            role,
+            password: hashedPassword,
+            confirmPassword: hashedPassword,
         });
 
-        return { 
-            message: 'Usuário criado com sucesso',
-        };
+        return { message: 'Usuário criado com sucesso' };
     }
 
-    // Método para signup de Admin de ONG
-    async signupNgoAdmin(signupDto: NgoSignupDto): Promise<any> {
+    async signupAdmin(signupDto: BasicUserDto): Promise<any> {
+        return this.createUser(signupDto, Role.ADMIN);
+    }
+
+    async signupNgoMember(signupDto: NgoMemberDto): Promise<any> {
+        const ngo = await this.ngoService.getById(signupDto.ngoId);
+        if (!ngo) {
+            throw new HttpException('ONG não encontrada', HttpStatus.NOT_FOUND);
+        }
+        return this.createUser(signupDto, Role.NGO_MEMBER_PENDING);
+    }
+
+    // Método para signup para conta institucional de ONG
+    async signupNgo(signupDto: NgoSignupDto): Promise<any> {
         const { user, ngo } = signupDto;
 
         if (user.password !== user.confirmPassword) {

@@ -60,7 +60,7 @@ export class PetService {
     }
     throw new NotFoundException('Pet not found');
   }
-}
+ }
 
   async getRecentPets() {
     const petIds = await this.statisticsService.getRecentPetIDs();
@@ -75,7 +75,7 @@ export class PetService {
     return petIds
       .map(id => pets.find(pet => pet._id.equals(id)))
       .filter(Boolean);
-}
+  }
 
   async updatePartial(id: string, updatePetDto: UpdatePetDto) {
     const existingPet = await this.petModel.findById(id.toString());

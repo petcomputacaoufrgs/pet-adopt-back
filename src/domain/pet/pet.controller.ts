@@ -22,6 +22,21 @@ export class PetController {
   getAll(@Query() query: any) {
     return this.petService.getAll(query);
   }
+
+  @Get('recent')
+    async getRecentPets() {
+        return this.petService.getRecentPets();
+  }
+
+  @Get(':id')
+  getById(@Param('id') id: string) {
+    return this.petService.getById(id);
+  }
+
+  @Get('ngo/:ngoId')
+  getByNgoId(@Param('ngoId') ngoId: string, @Query() query: any) {
+    //return this.petService.getByNgoId(ngoId, query);
+  }
   
   @Post()
   @UseInterceptors(
@@ -55,16 +70,6 @@ export class PetController {
 
    return this.petService.create(createPetDto);
  }
-  
-  @Get('recent')
-    async getRecentPets() {
-        return this.petService.getRecentPets();
-  }
-
-  @Get(':id')
-  getById(@Param('id') id: string) {
-    return this.petService.getById(id);
-  }
 
   @Patch(':id')
   @UseInterceptors(

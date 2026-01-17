@@ -2,12 +2,13 @@ import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, HttpExce
 //import { AuthPayloadDTO } from './dto/auth.dto';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
-import { CreateUserDto } from 'src/domain/user/dtos/create-user.dto';
+import { BasicUserDto, NgoMemberDto } from 'src/domain/user/dtos/create-user.dto';
 import { NgoSignupDto } from './dtos/ngo-signup.dto';
 import { Response, Request as ExpressRequest } from 'express'; // Para trabalhar com cookies
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from 'src/core/guards/roles.guard';
 import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
+import { HasContactPipe } from 'src/core/pipes/has-contact.pipe';
 
 @Controller('auth')
 export class AuthController {
@@ -60,14 +61,19 @@ export class AuthController {
         return this.authService.refreshTokens(refreshToken, res);
     }
 
-    @Post('signup/regular')
-    async signupRegular(@Body() signupDto: CreateUserDto) {
-        return this.authService.signupRegularUser(signupDto);
+    @Post('signup/admin')
+    async signupAdmin(@Body() signupDto: BasicUserDto) {
+        return this.authService.signupAdmin(signupDto);
+    }
+
+    @Post('signup/ngo-member')
+    async signupNgoMember(@Body() dto: NgoMemberDto) {
+        return this.authService.signupNgoMember(dto);
     }
 
     @Post('signup/ngo')
-    async signupNgo(@Body() signupDto: NgoSignupDto) {
-        return this.authService.signupNgoAdmin(signupDto);
+    async signupNgo(@Body(new HasContactPipe()) signupDto: NgoSignupDto) {
+        return this.authService.signupNgo(signupDto);
     }
 
     @Patch(':userId')

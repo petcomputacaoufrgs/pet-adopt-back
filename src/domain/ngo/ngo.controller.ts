@@ -2,8 +2,6 @@ import { Body, Controller, Delete, Get,Query ,Param, Patch, Post } from '@nestjs
 import { NgoService } from './ngo.service';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
-import { HasSocialMediaPipe } from 'src/core/pipes/has-social-media.pipe';
 
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
@@ -39,7 +37,7 @@ export class NgoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body(ValidationPipe) updateNgoDto: UpdateNgoDto) {
+  update(@Param('id') id: string, updateNgoDto: UpdateNgoDto) {
     return this.ngoService.update(id, updateNgoDto);
   }
 

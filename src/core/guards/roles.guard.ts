@@ -20,7 +20,7 @@ export class RolesGuard implements CanActivate {
 
     const hasRole = requiredRoles.some((role) => user.role === role);
     if (!hasRole) {
-      throw new ForbiddenException('Acesso negado: role insuficiente');
+      throw new ForbiddenException('Acesso negado: sua conta não possui permissão para realizar esta ação.');
     }
 
     return true;
