@@ -14,12 +14,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TokenSchema, Token } from './schemas/token.schema';
 import { TokenCleanupService } from './services/token-cleanup.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   providers: [AuthService, LocalStrategy, JwtStrategy, RefreshTokenStrategy, TokenCleanupService],
   imports: [
     UserModule,
     NgoModule,
+    MailModule,
     EncryptionModule,
     PassportModule,
     ConfigModule,

@@ -13,7 +13,9 @@ import { HasContactPipe } from 'src/core/pipes/has-contact.pipe';
 @Controller('auth')
 export class AuthController {
 
-    constructor(private authService: AuthService) { }
+    constructor(
+        private authService: AuthService,
+    ) { }
 
     @Post('login')
     @UseGuards(LocalAuthGuard) // Chama validateUser antes de login
@@ -74,6 +76,18 @@ export class AuthController {
     @Post('signup/ngo')
     async signupNgo(@Body(new HasContactPipe()) signupDto: NgoSignupDto) {
         return this.authService.signupNgo(signupDto);
+    }
+
+    // Solicitar recuperação de senha
+    @Post('password/request-reset')
+    async requestPasswordReset(@Body() body: { email: string }) {
+        return this.authService.requestPasswordReset(body.email);
+    }
+
+    // Resetar senha com token
+    @Post('password/reset')
+    async resetPassword(@Body() body: { token: string; newPassword: string }) {
+        return this.authService.resetPassword(body.token, body.newPassword);
     }
 
     @Patch(':userId')

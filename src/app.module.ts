@@ -5,6 +5,7 @@ import { NgoModule } from './domain/ngo/ngo.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './domain/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { AuthModule } from './modules/auth/auth.module';
     PetModule,
     NgoModule,
     UserModule,
-    AuthModule
+    AuthModule,
+    MailModule,
   ],
   controllers: [],
   providers: [],

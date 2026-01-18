@@ -10,10 +10,11 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { Model, Types, Connection } from 'mongoose';
 import { Response } from 'express'; // Response do Express, para trabalhar com cookies
-import { Token } from './schemas/token.schema';
+import { Token, TokenType } from './schemas/token.schema';
 import { UnauthorizedException } from '@nestjs/common';
 import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
 import { Ngo } from 'src/domain/ngo/schemas/ngo.schema';
+import { MailService } from '../mail/mail.service';
 
 const MAX_TOKENS_PER_USER = 3;
 
@@ -25,6 +26,7 @@ export class AuthService {
     private jwtService: JwtService,
     private ngoService: NgoService,
     private configService: ConfigService,
+    private mailService: MailService,
     @InjectConnection() private connection: Connection,
     @InjectModel(Token.name) private tokenModel: Model<Token>
   ) {}
@@ -93,10 +95,16 @@ export class AuthService {
         const expiresAt = new Date(Date.now() + refreshTokenExpiration);
 
         // Limitar a 3 tokens por usuário (opcional)
-        const userTokenCount = await this.tokenModel.countDocuments({ userId: payload.sub });
+        const userTokenCount = await this.tokenModel.countDocuments({ 
+            userId: payload.sub,
+            type: TokenType.REFRESH 
+        });
         if (userTokenCount >= MAX_TOKENS_PER_USER) {
             // Remove o token mais antigo
-            const oldestToken = await this.tokenModel.findOne({ userId: payload.sub }).sort({ createdAt: 1 });
+            const oldestToken = await this.tokenModel.findOne({ 
+                userId: payload.sub,
+                type: TokenType.REFRESH 
+            }).sort({ createdAt: 1 });
             if (oldestToken) {
                 await this.tokenModel.deleteOne({ _id: oldestToken._id });
             }
@@ -105,6 +113,7 @@ export class AuthService {
         const savedToken = await this.tokenModel.create({
             userId: payload.sub,
             token: refreshToken,
+            type: TokenType.REFRESH,
             expiresAt,
             deviceInfo: deviceInfo || 'Unknown', // Para identificar dispositivos
             createdAt: new Date(),
@@ -172,6 +181,7 @@ export class AuthService {
             const storedToken = await this.tokenModel.findOne({
                 token: refreshToken,
                 userId: userObjectId,
+                type: TokenType.REFRESH,
             });
 
             // 3. Verificar se o token existe
@@ -350,6 +360,97 @@ export class AuthService {
         }
     }
 
+    // Método para solicitar recuperação de senha
+    async requestPasswordReset(email: string): Promise<{ message: string }> {
+        const user = await this.userService.getByEmail(email);
+        if (!user) {
+            // Não revelar se o email existe (segurança)
+            return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
+        }
+
+        const userId = (user as any)._id.toString();
+
+        // Invalidar tokens de reset anteriores deste usuário
+        await this.tokenModel.deleteMany({
+            userId: Types.ObjectId.createFromHexString(userId),
+            type: TokenType.PASSWORD_RESET,
+        });
+
+        // Gerar novo token de reset
+        const resetToken = await this.generatePasswordResetToken(userId);
+
+        // Enviar email
+        await this.mailService.sendPasswordReset(email, resetToken);
+
+        return { message: 'Se o e-mail existir, um link de recuperação será enviado.' };
+    }
+
+    // Método privado para gerar token de recuperação de senha
+    private async generatePasswordResetToken(userId: string): Promise<string> {
+        const payload = { sub: userId };
+        
+        const resetToken = this.jwtService.sign(payload, {
+            secret: this.configService.get('JWT_SECRET'),
+            expiresIn: this.configService.get('PASSWORD_RESET_EXPIRES_IN') || '15m',
+        });
+
+        const resetTokenExpiration = this.parseJwtExpiration(
+            this.configService.get('PASSWORD_RESET_EXPIRES_IN') || '15m'
+        );
+        const expiresAt = new Date(Date.now() + resetTokenExpiration);
+
+        // Salvar token no banco
+        await this.tokenModel.create({
+            userId: Types.ObjectId.createFromHexString(userId),
+            token: resetToken,
+            type: TokenType.PASSWORD_RESET,
+            expiresAt,
+            deviceInfo: 'Password Reset',
+        });
+
+        return resetToken;
+    }
+
+    // Método para resetar a senha usando o token
+    async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+        try {
+            // 1. Verificar assinatura JWT
+            const decoded = this.jwtService.verify(token, {
+                secret: this.configService.get('JWT_SECRET'),
+            });
+
+            // 2. Buscar e deletar token do banco (uso único)
+            const storedToken = await this.tokenModel.findOneAndDelete({
+                token,
+                type: TokenType.PASSWORD_RESET,
+                expiresAt: { $gt: new Date() }, // Ainda não expirou
+            });
+
+            if (!storedToken) {
+                throw new UnauthorizedException('Token inválido ou expirado');
+            }
+
+            // 3. Atualizar senha
+            const hashedPassword = await this.encryptionService.encryptPassword(newPassword);
+            await this.userService.updatePassword(decoded.sub, hashedPassword);
+
+            // 4. Forçar logout em todos os dispositivos)
+            await this.revokeAllUserTokens(decoded.sub);
+
+            return { message: 'Senha atualizada com sucesso' };
+
+        } catch (error) {
+            if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+                throw new UnauthorizedException('Token inválido ou expirado');
+            }
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            console.error('Erro ao resetar senha:', error);
+            throw new HttpException('Erro ao resetar senha', HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Método para limpar tokens expirados
     async cleanupExpiredTokens(): Promise<void> {
         try {
@@ -365,7 +466,10 @@ export class AuthService {
     async revokeAllUserTokens(userId: string): Promise<void> {
         try {
             const userObjectId = Types.ObjectId.createFromHexString(userId);
-            const result = await this.tokenModel.deleteMany({ userId: userObjectId });
+            const result = await this.tokenModel.deleteMany({ 
+                userId: userObjectId,
+                type: TokenType.REFRESH 
+            });
         } catch (error) {
             console.error('Erro ao revogar tokens do usuário:', error);
         }
