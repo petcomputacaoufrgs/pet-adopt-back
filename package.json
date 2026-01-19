@@ -30,6 +30,7 @@
     "@nestjs/platform-express": "^10.4.17",
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^7.3.1",
+    "@nestjs/throttler": "^6.5.0",
     "@types/passport-local": "^1.0.38",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
@@ -89,6 +90,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
+    }
   }
 }

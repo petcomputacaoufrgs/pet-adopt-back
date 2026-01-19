@@ -10,6 +10,7 @@ import { diskStorage } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { PhotoValidationPipe } from 'src/core/pipes/photo-validation.pipe';
+import { Throttle } from '@nestjs/throttler';
 
 const MAX_PHOTOS = 10;
 
@@ -18,16 +19,20 @@ const MAX_PHOTOS = 10;
 export class PetController {
   constructor(private petService: PetService) {}
 
+  // Leitura pública - permite mais requisições
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
   @Get()
   getAll(@Query() query: any) {
     return this.petService.getAll(query);
   }
 
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
   @Get('recent')
     async getRecentPets() {
         return this.petService.getRecentPets();
   }
 
+  @Throttle({ default: { limit: 50, ttl: 60000 } }) // 50 req/min
   @Get(':id')
   getById(@Param('id') id: string) {
     return this.petService.getById(id);
