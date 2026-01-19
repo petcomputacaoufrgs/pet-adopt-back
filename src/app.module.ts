@@ -5,6 +5,9 @@ import { NgoModule } from './domain/ngo/ngo.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './domain/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MailModule } from './modules/mail/mail.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -17,12 +20,24 @@ import { AuthModule } from './modules/auth/auth.module';
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 60 segundos até resetar contagem
+        limit: 10,  // 10 requisições por TTL (default global)
+      },
+    ]),
     PetModule,
     NgoModule,
     UserModule,
-    AuthModule
+    AuthModule,
+    MailModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

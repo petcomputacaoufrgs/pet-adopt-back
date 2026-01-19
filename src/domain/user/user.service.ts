@@ -126,4 +126,15 @@ export class UserService {
     }
     return user;
   }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { password: hashedPassword },
+      { new: true }
+    );
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  }
 }
