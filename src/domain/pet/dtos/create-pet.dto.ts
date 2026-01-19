@@ -14,6 +14,9 @@ import {
     IsArray,
     ArrayMaxSize,
   } from 'class-validator';
+
+  import { Transform } from 'class-transformer';
+
   // import { IsSponsorshipRequired } from './is-sponsorship-required';
   import { Species } from 'src/core/enums/species.enum';
   import { Age } from 'src/core/enums/age.enum';
@@ -61,10 +64,22 @@ import {
   
     @IsBoolean()
     @IsNotEmpty()
+    @Transform(({ value }) => {
+    // Converte string "true"/"false" para booleano real
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+    })
     forTempHome: boolean;
   
     @IsBoolean()
     @IsNotEmpty()
+    @Transform(({ value }) => {
+    // Converte string "true"/"false" para booleano real
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+    })
     forAdoption: boolean;
   
     @IsNotEmpty()
@@ -84,5 +99,8 @@ import {
   
     @IsOptional()
     observations: string;
+
+    @IsOptional()
+    photoOrder: string;
   }
   
