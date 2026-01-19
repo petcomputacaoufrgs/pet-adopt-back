@@ -82,11 +82,8 @@ import {
     })
     forAdoption: boolean;
   
-    @IsNotEmpty()
+    @IsOptional()
     @IsArray()
-    @ArrayMinSize(2)
-    @ArrayMaxSize(10)
-    @IsString({ each: true })
     photos: string[];
   
     @IsNotEmpty()

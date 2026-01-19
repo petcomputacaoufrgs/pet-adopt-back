@@ -20,6 +20,9 @@ export class CreateNgoDto {
   @IsOptional()
   city: string;
 
+  @IsNotEmpty()
+  state: string;
+
   @IsOptional()
   website: string;
 

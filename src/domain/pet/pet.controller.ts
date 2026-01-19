@@ -66,8 +66,12 @@ export class PetController {
     @UploadedFiles(new PhotoValidationPipe()) files: Express.Multer.File[],
     @Body() createPetDto: CreatePetDto,
   ) {    
-    if (files.length === 0) {
+    if (!files || files.length === 0) {
         throw new BadRequestException('At least one photo is required.');
+    }
+
+    if (files.length > MAX_PHOTOS) {
+        throw new BadRequestException(`A maximum of ${MAX_PHOTOS} photos are allowed.`);
     }
 
    const photoPaths = files.map((file) => `/uploads/${file.filename}`);

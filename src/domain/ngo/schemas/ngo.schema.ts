@@ -27,6 +27,9 @@ export class Ngo extends Document {
   city: string;
 
   @Prop()
+  state: string;
+
+  @Prop()
   website: string;
 
   @Prop()
