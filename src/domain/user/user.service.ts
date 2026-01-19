@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
-import { CreateUserDto } from './dtos/create-user.dto';
+import { BasicUserDto, NgoMemberDto, UserData } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
 import { filter } from 'rxjs';
 import { NotFoundException } from '@nestjs/common';
+import { Ngo } from '../ngo/schemas/ngo.schema';
 
 @Injectable()
 export class UserService {
@@ -27,15 +28,19 @@ export class UserService {
     return users;
   }
 
-  async create(createUserDto: CreateUserDto, session?: any) {
-    if ((createUserDto.role === Role.NGO_MEMBER || createUserDto.role === Role.NGO_ADMIN_PENDING) && !createUserDto.ngoId) {
-      throw new Error('NGO is required when role is NGO_MEMBER or NGO_ADMIN_PENDING');
+  async create(createUserDto: UserData, session?: any) {
+    // Validação: se é role de NGO, deve ter ngoId
+    const ngoRoles = [Role.NGO_MEMBER_PENDING, Role.NGO_ADMIN_PENDING];
+    if (ngoRoles.includes(createUserDto.role) && !createUserDto.ngoId) {
+      throw new Error('ngoId é obrigatório para usuários de ONG');
     }
-    
-    if (createUserDto.role === Role.ADMIN && createUserDto.ngoId) {
-      throw new Error('NGO is not required when role is ADMIN');
+
+    // Validação: deve ser admin, ngo_admin_pending ou ngo_member_pending
+    const validRoles = [Role.ADMIN, ...ngoRoles];
+    if (!validRoles.includes(createUserDto.role)) {
+      throw new Error('Role inválida para criação de usuário');
     }
-  
+
     const userCreated = new this.userModel(createUserDto);
     
     if (session) {
@@ -120,5 +125,16 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
     return user;
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { password: hashedPassword },
+      { new: true }
+    );
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { IsNotEmpty, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateUserDto } from '../../../domain/user/dtos/create-user.dto';
+import { BasicUserDto } from '../../../domain/user/dtos/create-user.dto';
 import { CreateNgoDto } from '../../../domain/ngo/dtos/create-ngo.dto';
 
 // DTO para cadastro de ONG valida ambos os DTO's de usuário e ONG,
@@ -8,8 +8,8 @@ import { CreateNgoDto } from '../../../domain/ngo/dtos/create-ngo.dto';
 export class NgoSignupDto {
   @IsNotEmpty()
   @ValidateNested()
-  @Type(() => CreateUserDto)
-  readonly user: CreateUserDto;
+  @Type(() => BasicUserDto) // Tipo basic (sem ngoId) pois ngo ainda não foi criada
+  readonly user: BasicUserDto;
 
   @IsNotEmpty()
   @ValidateNested()

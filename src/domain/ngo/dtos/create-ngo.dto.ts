@@ -23,7 +23,7 @@ export class CreateNgoDto {
   @IsOptional()
   website: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   instagram: string;
 
   @IsOptional()

@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Query, Patch, Post, ValidationPipe } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { Role } from '../../core/enums/role.enum';

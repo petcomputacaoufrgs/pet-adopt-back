@@ -1,31 +1,38 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, IsEnum, ValidateIf } from 'class-validator';
 import { Role } from '../../../core/enums/role.enum';
 
-export class CreateUserDto {
-    @IsNotEmpty()
-    @IsString()
+// Interface interna para criação de usuários com todos os campos necessários
+export interface UserData {
     name: string;
-
-    @IsEmail({}, { message: 'Invalid Email' })
     email: string;
-
-    @IsNotEmpty()
-    @IsString()
     password: string;
-    
-    @IsNotEmpty()
-    @IsString()
     confirmPassword: string;
-
-    @IsNotEmpty()
-    @IsEnum(Role, {message: 'Invalid Role'})
     role: Role;
-
-    @ValidateIf((o) => o.role === Role.NGO_MEMBER)
-    @IsNotEmpty({ message: 'NGO ID is required when role is NGO_MEMBER' })
-    @IsString()
     ngoId?: string;
+}
 
-   
+// basic-user.dto.ts (para ADMIN)
+export class BasicUserDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+  
+  @IsNotEmpty()
+  @IsString()
+  confirmPassword: string;
+}
+
+// ngo-member.dto.ts (para NGO_MEMBER)
+export class NgoMemberDto extends BasicUserDto {
+  @IsNotEmpty()
+  @IsString()
+  ngoId: string;
 }
   

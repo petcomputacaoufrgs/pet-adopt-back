@@ -14,12 +14,31 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TokenSchema, Token } from './schemas/token.schema';
 import { TokenCleanupService } from './services/token-cleanup.service';
+import { TokenService } from './services/token.service';
+import { PasswordService } from './services/password.service';
+import { SignupService } from './services/signup.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  providers: [AuthService, LocalStrategy, JwtStrategy, RefreshTokenStrategy, TokenCleanupService],
+  providers: [
+    // Serviço principal (orquestrador)
+    AuthService,
+    
+    // Serviços especializados
+    TokenService,
+    PasswordService,
+    SignupService,
+    TokenCleanupService,
+    
+    // Strategies do Passport
+    LocalStrategy,
+    JwtStrategy,
+    RefreshTokenStrategy,
+  ],
   imports: [
     UserModule,
     NgoModule,
+    MailModule,
     EncryptionModule,
     PassportModule,
     ConfigModule,
@@ -33,6 +52,11 @@ import { TokenCleanupService } from './services/token-cleanup.service';
     }),
   ],
   controllers: [AuthController],
-  exports: [TokenCleanupService],
+  exports: [
+    // Exportar serviços que podem ser usados por outros módulos
+    AuthService,
+    TokenService,
+    TokenCleanupService,
+  ],
 })
 export class AuthModule {}
