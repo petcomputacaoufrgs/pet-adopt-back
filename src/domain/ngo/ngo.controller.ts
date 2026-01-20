@@ -29,6 +29,12 @@ export class NgoController {
     return this.ngoService.getById(id);
   }
 
+  @Get(':id/is-approved')
+  async isApproved(@Param('id') id: string) {
+    const approved = await this.ngoService.is_approved(id);
+    return { approved };
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
