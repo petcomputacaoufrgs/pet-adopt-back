@@ -26,6 +26,13 @@ export class PetController {
     return this.petService.getAll(query);
   }
 
+  // TO DO: Aplicar paginação corretamente no front usando esse método aqui
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
+  @Get('page')
+  getPage(@Query() query: any, @Query('page') page: number = 1, @Query('limit') limit: number = 12) { 
+    return this.petService.getPage(query, page, limit);
+  }
+
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
   @Get('recent')
     async getRecentPets() {
@@ -104,6 +111,8 @@ export class PetController {
     @UploadedFiles() files: Express.Multer.File[],
     @Body() updatePetDto: UpdatePetDto,
   ) {
+    
+
     // Se novas fotos foram enviadas, adiciona os caminhos
     if (files && files.length > 0) {
       const photoPaths = files.map((file) => `/uploads/${file.filename}`);

@@ -30,6 +30,47 @@ export class PetService {
     return pets;
   }
 
+
+  // TO DO: Aplicar paginação corretamente no front usando esse método aqui
+  // A ideia é "emburrecer" a paginação no front e deixar tudo controlado por aqui. 
+  // Independente do tamanho da página no front, aqui sempre será <limit> itens por página
+  async getPage(filters: any = {}, page: number = 1, limit: number = 12) {
+    // Remove filtros vazios
+
+    Object.keys(filters).forEach(key => {
+      if (!filters[key]) delete filters[key];
+    });
+
+    if (filters.species) filters.species = filters.species.toLowerCase();
+    if (filters.size) filters.size = filters.size.toUpperCase();
+
+    // Se page < 1, força ser 1 para evitar erro
+    const currentPage = Math.max(1, page);
+    const skip = (currentPage - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.petModel.find(filters)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.petModel.countDocuments(filters).exec()
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: currentPage,
+        lastPage: totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      }
+    };
+  }
+
+
   async create(createPetDto: CreatePetDto) {
     const petCreated = new this.petModel(createPetDto);
 
@@ -77,33 +118,58 @@ export class PetService {
       .filter(Boolean);
   }
 
-  async updatePartial(id: string, updatePetDto: UpdatePetDto) {
-    const existingPet = await this.petModel.findById(id.toString());
+
+    async updatePartial(id: string, updatePetDto: UpdatePetDto) {
+    const existingPet = await this.petModel.findById(id);
     if (!existingPet) return null;
 
-    // Normalizar arrays recebidos
-    const newPhotos = updatePetDto.photos ?? []; // fotos recém enviadas (ex: ['/uploads/xxx.jpg'])
-    const keptPhotos = updatePetDto.existingPhotos ?? []; // URLs que frontend quer manter
 
-    // Montar lista final sem duplicatas
-    const photosSet = new Set<string>([...newPhotos, ...keptPhotos]);
-    const photosToKeep = Array.from(photosSet);
+    const newUploadedPaths = updatePetDto.photos || [];
+    const photoOrder = JSON.parse(updatePetDto.photoOrder) || [];
 
-    // Atualizar documento no banco (sobrescreve campo photos com a lista final)
+
+    let finalPhotoList: string[] = [];
+
+    // Se o frontend enviou uma ordem, seguimos ela estritamente
+    if (photoOrder.length > 0) {
+      let uploadIndex = 0;
+
+      finalPhotoList = photoOrder.map((item) => {
+        if (item === 'NEW_FILE_MARKER') {
+          // Pega o próximo arquivo da fila de novos uploads
+          const path = newUploadedPaths[uploadIndex];
+          uploadIndex++;
+          return path;
+        }
+        return item;
+      }).filter((item) => item); // Remove undefined caso haja mais marcadores que arquivos (segurança)
+      
+    } else {
+      // Fallback: Se não mandou photoOrder, só dá um append das fotos antigas com as novas
+      const oldPhotos = existingPet.photos || [];
+      finalPhotoList = [...oldPhotos, ...newUploadedPaths];
+    }
+
+    finalPhotoList = [...new Set(finalPhotoList)];
+
+
     const updatedPet = await this.petModel.findByIdAndUpdate(
       id,
-      { ...updatePetDto, photos: photosToKeep },
+      { ...updatePetDto, photos: finalPhotoList },
       { new: true, runValidators: true }
     );
+    
+    const photosToDelete = (existingPet.photos || []).filter(
+      (oldPath) => !finalPhotoList.includes(oldPath)
+    );
 
-    // depois da atualização, remover os ficheiros que não serão mantidos
-    const photosToDelete = (existingPet.photos ?? []).filter(p => !photosToKeep.includes(p));
     if (photosToDelete.length > 0) {
       await this.deletePhotoFiles(photosToDelete);
     }
 
     return updatedPet;
   }
+
 
   async delete(id: string) {
     const pet = await this.petModel.findById(id);
