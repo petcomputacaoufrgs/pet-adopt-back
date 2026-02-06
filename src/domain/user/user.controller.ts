@@ -43,15 +43,18 @@ export class UserController {
     return this.userService.getPage(ngoId, query, false);
   }
 
-  @Get(':name')
+
+  @Get(':id')
+  getById(@Param('id') id: string) {    
+    return this.userService.getById(id);
+  }
+  
+  @Get('name/:name')
   getByName(@Param('name') name: string) {
     return this.userService.getByName(name);
   }
   
-  @Get(':id')
-  getById(@Param('id') id: string) {
-    return this.userService.getById(id);
-  }
+
 
 
   @Get('role/:role')
