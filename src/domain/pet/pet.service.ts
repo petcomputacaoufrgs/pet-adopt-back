@@ -45,7 +45,9 @@ export class PetService {
     if (filters.size) filters.size = filters.size.toUpperCase();
 
     // Se page < 1, força ser 1 para evitar erro
-    const currentPage = Math.max(1, page);
+    let currentPage = Math.max(1, page);
+
+
     const skip = (currentPage - 1) * limit;
 
     const [data, total] = await Promise.all([
@@ -64,8 +66,7 @@ export class PetService {
         total,
         page: currentPage,
         lastPage: totalPages,
-        hasNextPage: currentPage < totalPages,
-        hasPreviousPage: currentPage > 1,
+        limit: limit
       }
     };
   }

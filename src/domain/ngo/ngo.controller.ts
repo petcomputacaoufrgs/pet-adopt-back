@@ -19,9 +19,21 @@ export class NgoController {
     return this.ngoService.getApproved(query);
   }
 
+
+  @Get('/page')
+  getApprovedPage(@Query() query: any) {
+    return this.ngoService.getPage(query, true);
+  }
+
   @Get('/unapproved')
   getUnapproved() {
     return this.ngoService.getUnapproved();
+  }
+
+
+  @Get('/unapproved/page')
+  getUnapprovedPage(@Query() query: any) {
+    return this.ngoService.getPage(query, false);
   }
 
   @Get(':id')
@@ -43,7 +55,7 @@ export class NgoController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, updateNgoDto: UpdateNgoDto) {
+  update(@Param('id') id: string, @Body() updateNgoDto: UpdateNgoDto) {
     return this.ngoService.update(id, updateNgoDto);
   }
 
@@ -53,4 +65,6 @@ export class NgoController {
   async approveNgo(@Param('id') id: string) {
     return this.ngoService.approve(id);
   }
+
+
 }

@@ -29,7 +29,14 @@ export class PetController {
   // TO DO: Aplicar paginação corretamente no front usando esse método aqui
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
   @Get('page')
-  getPage(@Query() query: any, @Query('page') page: number = 1, @Query('limit') limit: number = 12) { 
+  getPage(@Query() query: any) { 
+
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 12;
+
+    delete query.page;
+    delete query.limit;
+    
     return this.petService.getPage(query, page, limit);
   }
 

@@ -54,7 +54,67 @@ export class NgoService {
     return await this.ngoModel.find({ _id: { $in: ngoIds } });
   }
 
+
+
+
+
+async getPage(filters: any = {}, approved: boolean = true){
+    // 1. Extrair paginação
+    const page = Number(filters.page) || 1;
+    const limit = Number(filters.limit) || 12;
+
+    // Removemos page/limit para não atrapalhar a limpeza de strings abaixo
+    const { page: _, limit: __, ...restFilters } = filters;
+
+    // Lógica antiga de limpeza de strings (Mantida)
+    Object.keys(restFilters).forEach(key => {
+      if (!restFilters[key]) delete restFilters[key];
+      if (typeof restFilters[key] === 'string') {
+          restFilters[key] = restFilters[key].replace(/^"+|"+$/g, '').replace(/^'+|'+$/g, '');
+      }
+    });
+
+    // 2. Busca IDs (Lógica existente)
+    const approvedUsers = await this.userService.getByRole(approved ? Role.NGO_ADMIN : Role.NGO_ADMIN_PENDING);
+    const ngoIds = approvedUsers.map(user => user.ngoId);
+    
+    // 3. Monta a query final
+    const combinedFilters = {
+      ...restFilters,
+      _id: { $in: ngoIds }
+    };
+
+    // 4. Calcula paginação
+    const skip = (page - 1) * limit;
+
+    // 5. Executa Busca + Contagem
+    const [data, total] = await Promise.all([
+      this.ngoModel.find(combinedFilters)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.ngoModel.countDocuments(combinedFilters).exec()
+    ]);
+
+
+    console.log(data);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+        limit
+      }
+    };
+  }
+
   async create(createNgoDto: CreateNgoDto, session: any) {
+
+    console.log('Criando ONG com dados:', createNgoDto);
+    console.log(createNgoDto.doc);
+
     const ngoCreated = new this.ngoModel({
         ...createNgoDto,
         approved: false  // Sempre falso para novas ONGs
@@ -65,6 +125,9 @@ export class NgoService {
 
   async getById(id: string) {
     const ngo = await this.ngoModel.findById(id);
+
+    console.log(ngo);
+
     return ngo;
   }
 
@@ -73,7 +136,15 @@ export class NgoService {
   }
   
   async update(id: string, updateNgoDto: UpdateNgoDto, session?: any) {
+
+    console.log(updateNgoDto);
+    
     const ngoUpdated = await this.ngoModel.findByIdAndUpdate(id, updateNgoDto, { new: true, session });
+
+
+    console.log('ONG atualizada:', id);
+    console.log(ngoUpdated);
+
     if (!ngoUpdated) {
         throw new NotFoundException('NGO not found');
     }

@@ -21,7 +21,7 @@ export class Ngo extends Document {
   phone: string;
 
   @Prop()
-  document: string;
+  doc: string;
 
   @Prop()
   city: string;

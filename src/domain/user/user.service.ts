@@ -28,6 +28,51 @@ export class UserService {
     return users;
   }
 
+
+  async getPage(ngoId: string, filters: any = {}, approved: boolean = true) {
+    // 1. Extrair paginação e separar dos filtros de busca
+    const page = Number(filters.page) || 1;
+    const limit = Number(filters.limit) || 12;
+    
+    // Removemos page/limit do objeto filters para não quebrar a query do Mongoose
+    const { page: _, limit: __, ...searchFilters } = filters;
+
+    const query: any = { ngoId, role: approved ? Role.NGO_MEMBER : Role.NGO_MEMBER_PENDING };
+
+    if (searchFilters.name) {
+      query.name = { $regex: new RegExp(searchFilters.name, 'i') };
+    }
+
+    console.log(query);
+
+
+    // 2. Calcular o "Pulo" (Skip)
+    const skip = (page - 1) * limit;
+
+    // 3. Executar as duas queries em paralelo (Dados + Contagem Total)
+    const [data, total] = await Promise.all([
+      this.userModel.find(query)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.userModel.countDocuments(query).exec()
+    ]);
+
+    console.log(data);
+    
+
+    // 4. Retornar estrutura paginada
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+        limit
+      }
+    };
+  }
+
   async create(createUserDto: UserData, session?: any) {
     // Validação: se é role de NGO, deve ter ngoId
     const ngoRoles = [Role.NGO_MEMBER_PENDING, Role.NGO_ADMIN_PENDING];

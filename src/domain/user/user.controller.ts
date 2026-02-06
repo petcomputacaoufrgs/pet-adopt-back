@@ -25,8 +25,22 @@ export class UserController {
   }
 
   @Get('approvedMembers/:ngoId')
-  getAnapprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {
+  getApprovedMembers(@Param('ngoId') ngoId: string, @Query() query: any) {
     return this.userService.getApprovedMembers(ngoId, query);
+  }
+
+
+  @Get('approvedMembers/page/:ngoId') 
+  getApprovedMembersPage(@Param('ngoId') ngoId: string, @Query() query: any) {
+    console.log('Getting approved members page for NGO', ngoId, 'with filters', query);
+    return this.userService.getPage(ngoId, query, true);
+  }
+
+  @Get('unapprovedMembers/page/:ngoId') 
+  getUnapprovedMembersPage(@Param('ngoId') ngoId: string, @Query() query: any) {
+    console.log('Getting unapproved members page for NGO', ngoId, 'with filters', query);
+    console.log("CCCCCCCCCCCCCCCCCCC");
+    return this.userService.getPage(ngoId, query, false);
   }
 
   @Get(':name')
