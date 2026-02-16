@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { Response } from 'express';
@@ -11,6 +11,7 @@ import { TokenService, TokenPayload } from './services/token.service';
 import { PasswordService } from './services/password.service';
 import { SignupService } from './services/signup.service';
 import { EncryptionService } from '../encryption/encryption.service';
+import { Role } from 'src/core/enums/role.enum';
 
 /**
  * AuthService - Orquestrador de autenticação
@@ -40,20 +41,29 @@ export class AuthService {
         if (!user) return null;
         
         // Verificar senha
-        if (this.encryptionService.comparePassword(password, user.password)) {
-            const { password, ...result } = user;
-            return result;
+        if (!this.encryptionService.comparePassword(password, user.password)) {
+            return null;
         }
         
-        return null;
+        // Verificar se a conta está pendente de aprovação
+        if (user.role === Role.NGO_MEMBER_PENDING) {
+            throw new ForbiddenException('Aguardando aprovação pela ONG');
+        }
+        
+        if (user.role === Role.NGO_ADMIN_PENDING) {
+            throw new ForbiddenException('Aguardando aprovação da ONG pelos Admins do site');
+        }
+        
+        const { password: _, ...result } = user;
+        return result;
     }
 
     // Login - gera tokens e configura cookies
     async login(user: any, res: Response, deviceInfo?: string) {
         const payload: TokenPayload = {
-            email: user._doc.email,
-            sub: user._doc._id,
-            role: user._doc.role,
+            email: user.email,
+            sub: user._id,
+            role: user.role,
         };
 
         const { accessToken, refreshToken } = await this.tokenService.generateTokenPair(payload, deviceInfo);
@@ -62,11 +72,11 @@ export class AuthService {
         return {
             message: 'Login successful',
             user: {
-                id: user._doc._id,
-                email: user._doc.email,
-                role: user._doc.role,
-                ngoId: user._doc.ngoId || null,
-                name: user._doc.name,
+                id: user._id,
+                email: user.email,
+                role: user.role,
+                ngoId: user.ngoId || null,
+                name: user.name,
             },
         };
     }

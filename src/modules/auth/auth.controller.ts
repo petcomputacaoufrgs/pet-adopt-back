@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, HttpException, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, UnauthorizedException, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
 import { BasicUserDto, NgoMemberDto } from 'src/domain/user/dtos/create-user.dto';
@@ -24,6 +24,7 @@ export class AuthController {
         return this.authService.login(req.user, res);
     }
 
+    @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 req/min
     @Post('logout')
     async logout(@Request() req: ExpressRequest, @Res({ passthrough: true }) res: Response) {
         const refreshToken = req.cookies?.refresh_token;
@@ -59,7 +60,7 @@ export class AuthController {
         const refreshToken = req.cookies?.refresh_token;
         
         if (!refreshToken) {
-            throw new HttpException('Token de atualização não encontrado', 401);
+            throw new UnauthorizedException('Token de atualização não encontrado');
         }
         
         return this.authService.refreshTokens(refreshToken, res);
