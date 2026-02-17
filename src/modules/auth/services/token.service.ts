@@ -169,9 +169,8 @@ export class TokenService {
 
     // Revoga todos os tokens de um usuário
     async revokeAllUserTokens(userId: string): Promise<void> {
-        const userObjectId = Types.ObjectId.createFromHexString(userId);
         await this.tokenModel.deleteMany({ 
-            userId: userObjectId,
+            userId: userId,
             type: TokenType.REFRESH 
         });
     }

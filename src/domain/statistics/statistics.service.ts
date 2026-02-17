@@ -28,4 +28,17 @@ export class StatisticsService {
     const stats = await this.statisticsModel.findOne();
     return stats?.recentPets || [];
   }
+
+  async removeRecentPet(petId: Types.ObjectId) {
+    const stats = await this.statisticsModel.findOne();
+    if (!stats) return;
+
+    // Remove o petId do array de pets recentes
+    stats.recentPets = stats.recentPets.filter(
+      id => !id.equals(petId)
+    );
+
+    stats.lastUpdated = new Date();
+    return await stats.save();
+  }
 }

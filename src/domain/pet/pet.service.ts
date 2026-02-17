@@ -180,11 +180,37 @@ export class PetService {
     
     const deletedPet = await this.petModel.findByIdAndDelete(id);
     
-    if (deletedPet && deletedPet.photos && deletedPet.photos.length > 0) {
-      await this.deletePhotoFiles(deletedPet.photos);
+    if (deletedPet) {
+      // Deleta as fotos físicas
+      if (deletedPet.photos && deletedPet.photos.length > 0) {
+        await this.deletePhotoFiles(deletedPet.photos);
+      }
+      
+      // Remove da coleção de estatísticas (recent pets)
+      await this.statisticsService.removeRecentPet(deletedPet._id);
     }
     
     return { deleted: true, pet: deletedPet };
+  }
+
+  async deleteByNgoId(ngoId: string, session?: any) {
+    // Busca todos os pets da ONG para deletar as fotos
+    const petsToDelete = await this.petModel.find({ ngoId }).session(session);
+    
+    // Deleta os documentos do banco
+    await this.petModel.deleteMany({ ngoId }).session(session);
+    
+    // Deleta as fotos físicas de todos os pets
+    const allPhotos = petsToDelete.flatMap(pet => pet.photos || []);
+    if (allPhotos.length > 0) {
+      await this.deletePhotoFiles(allPhotos);
+    }
+    
+    // Remove os pets da coleção de estatísticas (recent pets)
+    const petIds = petsToDelete.map(pet => pet._id);
+    for (const petId of petIds) {
+      await this.statisticsService.removeRecentPet(petId);
+    }
   }
 
   // Método auxiliar para deletar arquivos de foto

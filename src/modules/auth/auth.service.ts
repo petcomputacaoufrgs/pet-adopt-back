@@ -54,7 +54,9 @@ export class AuthService {
             throw new ForbiddenException('Aguardando aprovação da ONG pelos Admins do site');
         }
         
-        const { password: _, ...result } = user;
+        // Converter documento Mongoose para objeto plano antes do destructuring
+        const userObject = (user as any).toObject ? (user as any).toObject() : user;
+        const { password: _, ...result } = userObject;
         return result;
     }
 

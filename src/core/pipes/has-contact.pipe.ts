@@ -12,7 +12,6 @@ export class HasContactPipe implements PipeTransform {
       ngoData.instagram ||
       ngoData.twitter ||
       ngoData.tiktok ||
-      ngoData.website ||
       ngoData.phone;
     if (!hasSocialMedia) {
       throw new BadRequestException(

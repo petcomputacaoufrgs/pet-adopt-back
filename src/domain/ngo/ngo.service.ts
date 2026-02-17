@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import { CreateNgoDto } from './dtos/create-ngo.dto';
 import { UpdateNgoDto } from './dtos/update-ngo.dto';
 import { UserService } from '../user/user.service';
+import { PetService } from '../pet/pet.service';
 import { filter } from 'rxjs';
 import { Role } from 'src/core/enums/role.enum';
 
@@ -12,7 +13,8 @@ import { Role } from 'src/core/enums/role.enum';
 export class NgoService {
   constructor(
     @InjectModel(Ngo.name) private ngoModel: Model<Ngo>,
-    private userService: UserService
+    private userService: UserService,
+    private petService: PetService
   ) {}
 
   async getAll(filters: any = {}) {
@@ -156,24 +158,29 @@ async getPage(filters: any = {}, approved: boolean = true){
     session.startTransaction();
 
     try {
-      // 1. Verifica se a ONG existe antes de deletar
+      // Verifica se a ONG existe antes de deletar
       const ngoToDelete = await this.ngoModel.findById(id).session(session);
       
       if (!ngoToDelete) {
         throw new NotFoundException('NGO not found.');
       }
 
-      // 2. Delete a conta institucional associada primeiro
+      // Deleta dependências primeiro (dentro da transação)
+      // 1. Deleta pets da ONG (e suas fotos)
+      await this.petService.deleteByNgoId(id, session);
+
+      // 2. Deleta todos os usuários associados (admin + membros)
       await this.userService.deleteByNgoId(id, session);
 
-      // 3. Delete a ONG
+      // 3. Por último, deleta a ONG
       await this.ngoModel.findByIdAndDelete(id, { session });
 
-      // Salve a transação
+      // Commit da transação - tudo ou nada
       await session.commitTransaction();
-      return { message: 'NGO and associated user deleted successfully.' };
+
+      return { message: 'NGO and associated data deleted successfully.' };
     } catch (error) {
-      // Aborte a transação em caso de erro
+      // Aborta a transação em caso de erro
       await session.abortTransaction();
       throw error;
     } finally {

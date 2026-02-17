@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
@@ -8,10 +8,14 @@ import { Role } from 'src/core/enums/role.enum';
 import { filter } from 'rxjs';
 import { NotFoundException } from '@nestjs/common';
 import { Ngo } from '../ngo/schemas/ngo.schema';
+import { TokenService } from 'src/modules/auth/services/token.service';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {} // Uso da classe User do schema
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @Inject(forwardRef(() => TokenService)) private tokenService: TokenService
+  ) {}
 
   async getAll(filters: any = {}) {
     // Remove filtros vazios
@@ -112,7 +116,16 @@ export class UserService {
     return await this.userModel.find({ role });
   }
   async delete(id: string) {
+    // Revoga todos os tokens do usuário antes de deletar
+    try {
+      await this.tokenService.revokeAllUserTokens(id);
+    } catch (error) {
+      console.warn(`Falha ao revogar tokens do usuário ${id}:`, error.message);
+      // Continua com a deleção mesmo se a revogação falhar
+    }
+    
     const user = await this.userModel.findByIdAndDelete(id);
+    return user;
   }
 
   async getUnapprovedMembers(ngoId: string, filters: any = {}): Promise<User[]> {
@@ -134,11 +147,26 @@ export class UserService {
   }
   
   async deleteByNgoId(ngoId: string, session: any) {
-    const result = await this.userModel.deleteOne({ ngoId }, { session });
+    // Busca todos os usuários da ONG antes de deletar para revogar seus tokens
+    const usersToDelete = await this.userModel.find({ ngoId }).session(session);
+    
+    // Revoga tokens de cada usuário
+    for (const user of usersToDelete) {
+      try {
+        await this.tokenService.revokeAllUserTokens(user._id.toString());
+      } catch (error) {
+        console.warn(`Falha ao revogar tokens do usuário ${user._id}:`, error.message);
+        // Continua com os próximos usuários mesmo se a revogação falhar
+      }
+    }
 
-    // Registra se nenhum usuário foi encontrado
-    if (result.deletedCount === 0) {
-      console.warn(`No user found with ngoId: ${ngoId}`);
+    // Usa deleteMany para remover TODOS os usuários da ONG (admin + membros)
+    const result = await this.userModel.deleteMany({ ngoId }, { session });
+
+    // Registra quantos usuários foram deletados
+    if (result.deletedCount === 0) {      console.warn(`No users found with ngoId: ${ngoId}`);
+    } else {
+      console.log(`Deleted ${result.deletedCount} user(s) from ngoId: ${ngoId}`);
     }
     
     return result;

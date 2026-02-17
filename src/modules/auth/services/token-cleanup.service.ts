@@ -54,7 +54,7 @@ export class TokenCleanupService {
                 old: oldResult.deletedCount
             };
         } catch (error) {
-            this.logger.error('❌ Erro na limpeza manual:', error);
+            this.logger.error('Erro na limpeza manual:', error);
             throw error;
         }
     }
