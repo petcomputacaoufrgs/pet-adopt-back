@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pet } from './schemas/pet.schema';
 import { Model, Types } from 'mongoose';
@@ -119,10 +119,14 @@ export class PetService {
       .filter(Boolean);
   }
 
-
-    async updatePartial(id: string, updatePetDto: UpdatePetDto) {
+    async updatePartial(id: string, updatePetDto: UpdatePetDto, userNgoId?: string) {
     const existingPet = await this.petModel.findById(id);
     if (!existingPet) return null;
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && existingPet.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para editar este animal');
+    }
 
 
     const newUploadedPaths = updatePetDto.photos || [];
@@ -172,10 +176,15 @@ export class PetService {
   }
 
 
-  async delete(id: string) {
+  async delete(id: string, userNgoId?: string) {
     const pet = await this.petModel.findById(id);
     if (!pet) {
       return null;
+    }
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && pet.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para deletar este animal');
     }
     
     const deletedPet = await this.petModel.findByIdAndDelete(id);

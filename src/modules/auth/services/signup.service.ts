@@ -63,8 +63,6 @@ export class SignupService {
     async signupNgo(signupDto: NgoSignupDto): Promise<any> {
         const { user, ngo } = signupDto;
 
-
-        console.log('Dados recebidos para cadastro de ONG:', { user, ngo });
         // Validações
         this.passwordService.validatePasswordMatch(user.password, user.confirmPassword);
         this.passwordService.validatePasswordStrength(user.password);
@@ -92,8 +90,6 @@ export class SignupService {
             await session.withTransaction(async () => {
                 // 1. Criar ONG
                 const createdNgo = await this.ngoService.create(ngo, session);
-
-                console.log('ONG criada com sucesso:', createdNgo);
                 
                 // 2. Criar usuário admin da ONG
                 const hashedPassword = await this.encryptionService.encryptPassword(user.password);

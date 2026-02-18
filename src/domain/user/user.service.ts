@@ -6,7 +6,7 @@ import { BasicUserDto, NgoMemberDto, UserData } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { Role } from 'src/core/enums/role.enum';	
 import { filter } from 'rxjs';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { Ngo } from '../ngo/schemas/ngo.schema';
 import { TokenService } from 'src/modules/auth/services/token.service';
 
@@ -47,9 +47,6 @@ export class UserService {
       query.name = { $regex: new RegExp(searchFilters.name, 'i') };
     }
 
-    console.log(query);
-
-
     // 2. Calcular o "Pulo" (Skip)
     const skip = (page - 1) * limit;
 
@@ -61,9 +58,6 @@ export class UserService {
         .exec(),
       this.userModel.countDocuments(query).exec()
     ]);
-
-    console.log(data);
-    
 
     // 4. Retornar estrutura paginada
     return {
@@ -99,8 +93,18 @@ export class UserService {
     }
   }
 
-  async getById(id: string) {
+  async getById(id: string, userNgoId?: string) {
     const user = await this.userModel.findById(id);
+    
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && user.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para visualizar este usuário');
+    }
+    
     return user;
   }
 
@@ -115,7 +119,18 @@ export class UserService {
   async getByRole(role: Role): Promise<User[]> {
     return await this.userModel.find({ role });
   }
-  async delete(id: string) {
+  async delete(id: string, userNgoId?: string) {
+    const user = await this.userModel.findById(id);
+    
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && user.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para deletar este usuário');
+    }
+    
     // Revoga todos os tokens do usuário antes de deletar
     try {
       await this.tokenService.revokeAllUserTokens(id);
@@ -124,8 +139,8 @@ export class UserService {
       // Continua com a deleção mesmo se a revogação falhar
     }
     
-    const user = await this.userModel.findByIdAndDelete(id);
-    return user;
+    await this.userModel.findByIdAndDelete(id);
+    return { message: 'Usuário deletado com sucesso', user };
   }
 
   async getUnapprovedMembers(ngoId: string, filters: any = {}): Promise<User[]> {
@@ -172,11 +187,19 @@ export class UserService {
     return result;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto, session?: any) {
-    const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true, session });
-    if (!userUpdated) {
-      throw new NotFoundException('User not found');
+  async update(id: string, updateUserDto: UpdateUserDto, userNgoId?: string, session?: any) {
+    const user = await this.userModel.findById(id);
+    
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
     }
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && user.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para editar este usuário');
+    }
+    
+    const userUpdated = await this.userModel.findByIdAndUpdate(id, updateUserDto, { new: true, session });
     return userUpdated;
   }
 
@@ -192,12 +215,20 @@ export class UserService {
     return user;
   }
 
-  async approve(id: string): Promise<User> {
-    const user = await this.userModel.findByIdAndUpdate(id, {role: Role.NGO_MEMBER }, { new: true });
+  async approve(id: string, userNgoId?: string): Promise<User> {
+    const user = await this.userModel.findById(id);
+    
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Usuário não encontrado');
     }
-    return user;
+
+    // Verificar ownership se userNgoId foi fornecido (via guard)
+    if (userNgoId && user.ngoId !== userNgoId) {
+      throw new ForbiddenException('Você não tem permissão para aprovar este usuário');
+    }
+    
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, {role: Role.NGO_MEMBER }, { new: true });
+    return updatedUser;
   }
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {

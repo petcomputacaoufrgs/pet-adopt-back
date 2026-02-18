@@ -13,6 +13,7 @@ export interface TokenPayload {
     email: string;
     sub: string;
     role: string;
+    ngoId?: string;
 }
 
 @Injectable()
@@ -162,6 +163,7 @@ export class TokenService {
             email: decodedToken.email,
             sub: decodedToken.sub,
             role: decodedToken.role,
+            ...(decodedToken.ngoId && { ngoId: decodedToken.ngoId }),
         };
 
         return this.generateTokenPair(payload);
@@ -186,5 +188,13 @@ export class TokenService {
         await this.tokenModel.deleteMany({
             expiresAt: { $lt: new Date() }
         });
+    }
+
+    // Revoga TODOS os tokens refresh do sistema (útil para migrações de segurança)
+    async revokeAllTokens(): Promise<number> {
+        const result = await this.tokenModel.deleteMany({ 
+            type: TokenType.REFRESH 
+        });
+        return result.deletedCount;
     }
 }

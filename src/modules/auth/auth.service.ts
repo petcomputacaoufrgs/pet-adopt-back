@@ -66,6 +66,7 @@ export class AuthService {
             email: user.email,
             sub: user._id,
             role: user.role,
+            ...(user.ngoId && { ngoId: user.ngoId }), // Inclui ngoId se existe
         };
 
         const { accessToken, refreshToken } = await this.tokenService.generateTokenPair(payload, deviceInfo);
@@ -119,6 +120,15 @@ export class AuthService {
         await this.tokenService.revokeAllUserTokens(userId);
     }
 
+    // Revogar TODOS os tokens do sistema (apenas para administradores)
+    async revokeAllSystemTokens(): Promise<{ message: string; tokensRevoked: number }> {
+        const count = await this.tokenService.revokeAllTokens();
+        return {
+            message: 'Todos os tokens do sistema foram revogados. Usuários precisarão fazer login novamente.',
+            tokensRevoked: count
+        };
+    }
+
     // ==================== CADASTROS ====================
 
     async signupAdmin(signupDto: BasicUserDto): Promise<any> {
@@ -165,7 +175,7 @@ export class AuthService {
                 await this.ngoService.update(user.ngoId, updateDto, session);
                 
                 if (updateDto.name) {
-                    await this.userService.update(userId, { name: updateDto.name }, session);
+                    await this.userService.update(userId, { name: updateDto.name }, undefined, session);
                 }
             });
             

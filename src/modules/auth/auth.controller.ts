@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, UnauthorizedException, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body, Get, Patch, Param, UnauthorizedException, Res, Delete } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from 'src/modules/auth/guards/local-auth.guard';
 import { BasicUserDto, NgoMemberDto } from 'src/domain/user/dtos/create-user.dto';
@@ -9,6 +9,8 @@ import { RolesGuard } from 'src/core/guards/roles.guard';
 import { UpdateNgoDto } from 'src/domain/ngo/dtos/update-ngo.dto';
 import { HasContactPipe } from 'src/core/pipes/has-contact.pipe';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { Role } from 'src/core/enums/role.enum';
 
 @Controller('auth')
 export class AuthController {
@@ -67,6 +69,8 @@ export class AuthController {
     }
 
     @Throttle({ default: { limit: 5, ttl: 300000 } }) // 5 req por 5 min
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
     @Post('signup/admin')
     async signupAdmin(@Body() signupDto: BasicUserDto) {
         return this.authService.signupAdmin(signupDto);
@@ -102,5 +106,16 @@ export class AuthController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     async updateNgoInfo(@Param('userId') userId: string, @Body() updateData: UpdateNgoDto) {
         return this.authService.updateNgoProfile(userId, updateData);
+    }
+
+    // ==================== ADMINISTRAÇÃO ====================
+
+    // Revogar todos os tokens do sistema (APENAS ADMIN)
+    @Delete('tokens/revoke-all')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN)
+    @Throttle({ default: { limit: 1, ttl: 300000 } }) // 1 req por 5 min
+    async revokeAllTokens() {
+        return this.authService.revokeAllSystemTokens();
     }
 }

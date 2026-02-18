@@ -1,6 +1,6 @@
 // pet.controller.ts
 
-import { Body, Controller, Delete, Get, Param, Post, Patch, Query, UseInterceptors, UploadedFiles, UsePipes, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Patch, Query, UseInterceptors, UploadedFiles, UsePipes, BadRequestException, NotFoundException, UseGuards, Request } from '@nestjs/common';
 import { PetService } from './pet.service';
 import { CreatePetDto } from './dtos/create-pet.dto';
 import { UpdatePetDto } from './dtos/update-pet.dto';
@@ -11,6 +11,12 @@ import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 import { PhotoValidationPipe } from 'src/core/pipes/photo-validation.pipe';
 import { Throttle } from '@nestjs/throttler';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/core/guards/roles.guard';
+import { NgoOwnershipGuard } from 'src/core/guards/ngo-ownership.guard';
+import { Roles } from 'src/core/decorators/roles.decorator';
+import { NgoOwnership } from 'src/core/decorators/ngo-ownership.decorator';
+import { Role } from 'src/core/enums/role.enum';
 
 const MAX_PHOTOS = 10;
 
@@ -52,12 +58,11 @@ export class PetController {
     return this.petService.getById(id);
   }
 
-  @Get('ngo/:ngoId')
-  getByNgoId(@Param('ngoId') ngoId: string, @Query() query: any) {
-    //return this.petService.getByNgoId(ngoId, query);
-  }
-  
+  // Adicionar animal, usa interceptor para salvar fotos e pipe para validar quantidade e formato
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard, NgoOwnershipGuard)
+  @Roles(Role.ADMIN, Role.NGO_ADMIN, Role.NGO_MEMBER)
+  @NgoOwnership({ resourceIdBody: 'ngoId' })
   @UseInterceptors(
     FilesInterceptor('photos', MAX_PHOTOS, {
       storage: diskStorage({
@@ -94,7 +99,11 @@ export class PetController {
    return this.petService.create(createPetDto);
  }
 
+  // Edição de animal - permite atualização parcial (inclusive só fotos)
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard, NgoOwnershipGuard)
+  @Roles(Role.ADMIN, Role.NGO_ADMIN, Role.NGO_MEMBER)
+  @NgoOwnership({ resourceIdParam: 'id', checkInService: true })
   @UseInterceptors(
     FilesInterceptor('photos', MAX_PHOTOS, {
       storage: diskStorage({
@@ -117,6 +126,7 @@ export class PetController {
     @Param('id') id: string,
     @UploadedFiles() files: Express.Multer.File[],
     @Body() updatePetDto: UpdatePetDto,
+    @Request() req: any,
   ) {
     
 
@@ -126,7 +136,7 @@ export class PetController {
       updatePetDto.photos = photoPaths;
     }
 
-    const updatedPet = await this.petService.updatePartial(id, updatePetDto);
+    const updatedPet = await this.petService.updatePartial(id, updatePetDto, req.userNgoId);
     
     if (!updatedPet) {
       throw new NotFoundException('Pet not found');
@@ -136,8 +146,11 @@ export class PetController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string) {
-    const result = await this.petService.delete(id);
+  @UseGuards(JwtAuthGuard, RolesGuard, NgoOwnershipGuard)
+  @Roles(Role.ADMIN, Role.NGO_ADMIN, Role.NGO_MEMBER)
+  @NgoOwnership({ resourceIdParam: 'id', checkInService: true })
+  async delete(@Param('id') id: string, @Request() req: any) {
+    const result = await this.petService.delete(id, req.userNgoId);
     
     if (!result) {
       throw new NotFoundException('Pet not found');
