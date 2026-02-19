@@ -31,9 +31,6 @@ export class PetService {
   }
 
 
-  // TO DO: Aplicar paginação corretamente no front usando esse método aqui
-  // A ideia é "emburrecer" a paginação no front e deixar tudo controlado por aqui. 
-  // Independente do tamanho da página no front, aqui sempre será <limit> itens por página
   async getPage(filters: any = {}, page: number = 1, limit: number = 12) {
     // Remove filtros vazios
 
@@ -160,10 +157,10 @@ export class PetService {
 
     const updatedPet = await this.petModel.findByIdAndUpdate(
       id,
-      { ...updatePetDto, photos: finalPhotoList },
+      { ...updatePetDto, photos: finalPhotoList, species: updatePetDto.species === Species.OTHER ? updatePetDto.otherSpecies : updatePetDto.species },
       { new: true, runValidators: true }
     );
-    
+ 
     const photosToDelete = (existingPet.photos || []).filter(
       (oldPath) => !finalPhotoList.includes(oldPath)
     );
