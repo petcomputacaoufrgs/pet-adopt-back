@@ -32,19 +32,31 @@ export class PetService {
 
 
   async getPage(filters: any = {}, page: number = 1, limit: number = 12) {
+    console.log('Received filters:', filters);
+    
     // Remove filtros vazios
-
     Object.keys(filters).forEach(key => {
       if (!filters[key]) delete filters[key];
     });
 
+    // Transforma os campos de texto para Exato + Case Insensitive
+    const textFields = ['name', 'breed', 'city'];
+    textFields.forEach(field => {
+      if (filters[field]) {
+        // Escapa a string para evitar que o usuário digite símbolos que quebrem o banco
+        const safeVal = filters[field].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // ^ = início, $ = fim, i = case-insensitive
+        filters[field] = { $regex: `^${safeVal}$`, $options: 'i' };
+      }
+    });
+
+    // Os outros campos que já tinham padrão fixo
     if (filters.species) filters.species = filters.species.toLowerCase();
     if (filters.size) filters.size = filters.size.toUpperCase();
 
-    // Se page < 1, força ser 1 para evitar erro
+    // Paginação
     let currentPage = Math.max(1, page);
-
-
     const skip = (currentPage - 1) * limit;
 
     const [data, total] = await Promise.all([

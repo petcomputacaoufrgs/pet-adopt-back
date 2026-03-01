@@ -103,7 +103,7 @@ export class UserController {
   // Editar usuário: somente própria conta
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard, SelfOrNgoOwnershipGuard)
-  @Roles(Role.NGO_ADMIN, Role.NGO_MEMBER)
+  @Roles(Role.ADMIN, Role.NGO_ADMIN, Role.NGO_MEMBER)
   @SelfOrNgoOwnership({ 
     userIdParam: 'id', 
     allowSelf: true, 

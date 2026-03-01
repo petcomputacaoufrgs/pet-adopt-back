@@ -36,7 +36,7 @@ export class PetController {
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 req/min
   @Get('page')
   getPage(@Query() query: any) { 
-
+    
     const page = Number(query.page) || 1;
     const limit = Number(query.limit) || 12;
 
