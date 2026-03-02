@@ -1,49 +1,64 @@
-import { IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsEmail, IsOptional, Max, MaxLength, max } from 'class-validator';
 
 export class CreateNgoDto {
   @IsNotEmpty()
+  @MaxLength(100)
   name: string;
 
   @IsOptional()
+  @MaxLength(500)
   description: string;
 
   @IsNotEmpty()
   @IsEmail()
+  @MaxLength(255)
   email: string;
 
   @IsOptional()
+  @MaxLength(20)
   phone: string;
 
   @IsOptional()
+  @MaxLength(20)
   doc: string;
 
   @IsOptional()
+  @MaxLength(100)
   city: string;
 
   @IsNotEmpty()
+  @MaxLength(2)
   state: string;
 
   @IsOptional()
+  @MaxLength(255)
   website: string;
 
   @IsOptional()
+  @MaxLength(255)
   instagram: string;
 
   @IsOptional()
+  @MaxLength(255)
   facebook: string;
 
   @IsOptional()
+  @MaxLength(255)
   tiktok: string;
 
   @IsNotEmpty()
+  @MaxLength(2048)
   adoptionForm: string;
 
   @IsOptional()
+  @MaxLength(2048)
   sponsorshipForm: string;
 
   @IsOptional()
+  @MaxLength(2048)
   temporaryHomeForm: string;
 
   @IsOptional()
+  @MaxLength(2048)
   claimForm: string;
 }

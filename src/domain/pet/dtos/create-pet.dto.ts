@@ -28,6 +28,7 @@ import {
   
     @IsNotEmpty()
     @IsEnum(Age)
+    @MaxLength(15)
     age: string;
   
     @IsNotEmpty()
@@ -50,12 +51,15 @@ import {
     size: string;
   
     @IsOptional()
+    @MaxLength(20)
     breed: string;
   
     @IsNotEmpty()
+    @MaxLength(500)
     characteristics: string;
   
     @IsNotEmpty()
+    @MaxLength(255)
     ngoId: string;
   
     @IsNotEmpty()
@@ -88,13 +92,16 @@ import {
   
     @IsNotEmpty()
     @IsString()
+    @MaxLength(100)
     city: string;
   
     @IsNotEmpty()
     @IsString()
+    @MaxLength(2)
     state: string;
   
     @IsOptional()
+    @MaxLength(255)
     observations: string;
 
     @IsOptional()
