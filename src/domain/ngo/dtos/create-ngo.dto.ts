@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsEmail, IsOptional, Max, MaxLength, max } from 'class-validator';
+import { IsNotEmpty, IsEmail, IsOptional, Max, MaxLength, max, IsIn } from 'class-validator';
 
 export class CreateNgoDto {
   @IsNotEmpty()
@@ -28,6 +28,7 @@ export class CreateNgoDto {
 
   @IsNotEmpty()
   @MaxLength(2)
+  @IsIn(['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'])
   state: string;
 
   @IsOptional()
